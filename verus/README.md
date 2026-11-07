@@ -1,5 +1,7 @@
 # Verus implementations of AES, SHA-256 and HMAC-SHA-256
 
+English | [日本語](README.ja.md)
+
 This directory is a Cargo crate, `foundation_verus`. It holds Rust
 implementations, proved with Verus, of three algorithms from the NSA's
 Cryptol specifications in [`../algorithms`](../algorithms):

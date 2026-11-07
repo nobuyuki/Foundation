@@ -1,5 +1,7 @@
 # SAW
 
+English | [日本語](saw.ja.md)
+
 SAW proofs that the crate's implementation layer equals NSA's Cryptol,
 at fixed sizes, by two routes: on rustc's LLVM bitcode of the crate
 (`llvm_verify`, the SPARK crate's route) and on its MIR (`mir_verify`,

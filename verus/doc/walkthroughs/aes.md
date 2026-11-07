@@ -1,5 +1,7 @@
 # AES: the Verus spec layer beside NSA's Cryptol
 
+English | [日本語](aes.ja.md)
+
 How the crate implements AES (FIPS 197) at 128, 192 and 256-bit keys and
 how it is tied to NSA's Cryptol in `algorithms/AES/`. The counterpart of
 the SPARK crate's `spark/doc/walkthroughs/aes.md`

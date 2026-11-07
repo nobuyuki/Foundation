@@ -1,5 +1,7 @@
 # The Cryptol prelude in Verus
 
+English | [日本語](cryptol-prelude.ja.md)
+
 The Cryptol built-ins the spec layers are written in (`foldl`, `@`,
 `join`, `split`, `pmult`, ...), stated once in Verus as spec functions and
 lemmas. The counterpart of the SPARK crate's `spark/doc/cryptol-prelude.md`

@@ -1,5 +1,7 @@
 # The FFI check against the Cryptol
 
+English | [日本語](ffi.ja.md)
+
 How the crate's executable functions are called from Cryptol through its
 `foreign` interface and compared with NSA's Cryptol, by exhaustive or random
 testing. The counterpart of the SPARK crate's `spark/doc/ffi.md`

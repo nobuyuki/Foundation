@@ -1,5 +1,7 @@
 # Bootstrapping the toolchain
 
+English | [日本語](bootstrap.ja.md)
+
 Installing the tools of [reproducing.md](reproducing.md) that are not
 fetched by rustup or cargo. The counterpart of the SPARK crate's
 `spark/doc/bootstrap.md` (github.com/manthonyaiello/Foundation, tag

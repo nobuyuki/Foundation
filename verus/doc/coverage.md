@@ -1,5 +1,7 @@
 # Coverage and mutation testing
 
+English | [日本語](coverage.ja.md)
+
 How much of the executable code the FFI properties run: LLVM source-based
 coverage (rustc's `-C instrument-coverage`), by region, line and branch
 outcome. The counterpart of the "Coverage" part of the SPARK crate's

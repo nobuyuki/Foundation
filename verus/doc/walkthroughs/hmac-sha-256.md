@@ -1,5 +1,7 @@
 # HMAC-SHA-256: from NSA's Cryptol to Verus
 
+English | [日本語](hmac-sha-256.ja.md)
+
 How the crate implements HMAC-SHA-256 (FIPS 198-1) and how it is tied to
 NSA's Cryptol of HMAC, `algorithms/HMAC/Main.cry`. The counterpart of the
 SPARK crate's `spark/doc/walkthroughs/hmac-sha-256.md`

@@ -1,5 +1,7 @@
 # Performance
 
+English | [日本語](performance.ja.md)
+
 Size and speed of the crate's AES against NSA's Rust reference AES, on an
 x86_64 Linux desktop. The counterpart of the SPARK crate's
 `spark/doc/performance.md`. Back to the [README](../README.md).

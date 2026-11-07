@@ -1,5 +1,7 @@
 # Proving
 
+English | [日本語](proving.ja.md)
+
 How the crate is proved with Verus: the command, the resource limits, where
 the spec layer and the implementation are deliberately not one-to-one, the
 Cryptol's own properties re-proved in Verus, and the gates. The counterpart

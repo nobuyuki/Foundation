@@ -1,5 +1,7 @@
 # Reproducing the results
 
+English | [日本語](reproducing.ja.md)
+
 The counterpart of the SPARK crate's `spark/doc/reproducing.md`
 (github.com/manthonyaiello/Foundation, tag `spark-v1.0`), with the same
 sections. The SPARK crate has two paths: the **FSF path**, with free tools,
