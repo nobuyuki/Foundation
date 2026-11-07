@@ -1,0 +1,120 @@
+# properties.txt -- the FFI properties, run by scripts/check-ffi.sh. The
+# counterpart of the SPARK crate's spark/cryptol/properties.txt, in the same
+# format.
+#
+# One line per property:
+#
+#     module file | property | function | mode | tests
+#
+# module file  Under verus/cryptol/, the module that states the property. It
+#              declares the Verus exports as body-less foreign functions;
+#              check-ffi.sh links the FFI library beside it.
+# property     The property's name in that module.
+# function     The Cryptol declaration the property checks, qualified by its
+#              module as in the SPARK crate's scripts/board-rows.txt
+#              (AES::GF28::xTimes).
+# mode         exhaust (Cryptol's :exhaust) when the domain is at most 2^16
+#              values, check (:check, random testing) otherwise.
+# tests        For exhaust, the size of the domain: check-ffi.sh fails unless
+#              Cryptol reports exactly that many tests. For check, the number
+#              of random tests to run (Cryptol's tests setting).
+#
+# The properties are the SPARK crate's that check an executable function,
+# with its names and test counts, and those of its spec properties whose
+# function has an executable counterpart here. Only executable functions
+# can be exported (doc/ffi.md); the SPARK crate's properties of its ghost
+# spec alone have no line here:
+#
+#   prop_Dot, prop_Cipher128, prop_Cipher192, prop_Cipher256,
+#   prop_InvCipher128, prop_InvCipher192, prop_InvCipher256,
+#   prop_InvCipher'128, prop_InvCipher'192, prop_InvCipher'256,
+#   prop_CipherExample, prop_KeyExpansion128, prop_KeyExpansion192,
+#   prop_KeyExpansion256, prop_Example128KeyExpansion,
+#   prop_Example192KeyExpansion, prop_Example256KeyExpansion,
+#   prop_Encrypt128, prop_Encrypt192, prop_Encrypt256, prop_Decrypt128,
+#   prop_Decrypt192, prop_Decrypt256, prop_AES128_Encrypt,
+#   prop_AES128_Decrypt, prop_AES192_Encrypt, prop_AES192_Decrypt,
+#   prop_AES256_Encrypt, prop_AES256_Decrypt, prop_AES128Example,
+#   prop_AES192Example, prop_AES256Example, prop_FIPS197_C, prop_pad,
+#   prop_parse, prop_step, prop_hash, prop_hash_bits, prop_hash_FIPS,
+#   prop_Hash_Bytes, prop_Hash_Bytes_FIPS, prop_HMAC_texts, prop_HMAC_keys,
+#   prop_HMAC_bits, prop_HMAC_RFC4231, prop_HMAC_init, prop_foldl,
+#   prop_foldl_enumeration, prop_bit_8, prop_head_8, prop_bit_32,
+#   prop_bit_15, prop_join_bytes, prop_split_word, prop_join_words,
+#   prop_zero_64, prop_literal_64, prop_repeat_4, prop_reverse_6,
+#   prop_bulk_index_block, prop_bulk_index_table, prop_ceil, prop_pmult_8,
+#   prop_pmult_9, prop_pmod_15, prop_pmod_15_aes, prop_pdiv_8, prop_pdiv_9.
+#
+Verus/AES/GF28.cry           | prop_xTimes                 | AES::GF28::xTimes                    | exhaust | 256
+Verus/AES/GF28.cry           | prop_Impl_Dot               | AES::GF28::(•)                       | exhaust | 65536
+Verus/AES/SBox.cry           | prop_SBox                   | AES::SBox::SBox                      | exhaust | 256
+Verus/AES/SBox.cry           | prop_InvSBox                | AES::SBox::InvSBox                   | exhaust | 256
+Verus/AES/Cipher.cry         | prop_SubBytes               | AES::Cipher::SubBytes                | check   | 10000
+Verus/AES/Cipher.cry         | prop_InvSubBytes            | AES::Cipher::InvSubBytes             | check   | 10000
+Verus/AES/Cipher.cry         | prop_ShiftRows              | AES::Cipher::ShiftRows               | check   | 10000
+Verus/AES/Cipher.cry         | prop_InvShiftRows           | AES::Cipher::InvShiftRows            | check   | 10000
+Verus/AES/Cipher.cry         | prop_MixColumnsStep         | AES::Cipher::MixColumnsStep          | check   | 10000
+Verus/AES/Cipher.cry         | prop_MixColumns             | AES::Cipher::MixColumns              | check   | 10000
+Verus/AES/Cipher.cry         | prop_InvMixColumnsStep      | AES::Cipher::InvMixColumnsStep       | check   | 10000
+Verus/AES/Cipher.cry         | prop_InvMixColumns          | AES::Cipher::InvMixColumns           | check   | 10000
+Verus/AES/Cipher.cry         | prop_AddRoundKey            | AES::Cipher::AddRoundKey             | check   | 10000
+Verus/AES/Cipher.cry         | prop_Round                  | AES::Cipher::Round                   | check   | 10000
+Verus/AES/Cipher.cry         | prop_InvRound               | AES::Cipher::InvRound                | check   | 10000
+Verus/AES/Cipher.cry         | prop_InvRound'              | AES::Cipher::InvRound'               | check   | 10000
+Verus/AES/Cipher.cry         | prop_Encrypt_Block128       | AES::Cipher::Cipher                  | check   | 1000
+Verus/AES/Cipher.cry         | prop_Encrypt_Block192       | AES::Cipher::Cipher                  | check   | 1000
+Verus/AES/Cipher.cry         | prop_Encrypt_Block256       | AES::Cipher::Cipher                  | check   | 1000
+Verus/AES/Cipher.cry         | prop_Decrypt_Block128       | AES::Cipher::InvCipher               | check   | 1000
+Verus/AES/Cipher.cry         | prop_Decrypt_Block192       | AES::Cipher::InvCipher               | check   | 1000
+Verus/AES/Cipher.cry         | prop_Decrypt_Block256       | AES::Cipher::InvCipher               | check   | 1000
+Verus/AES/Cipher.cry         | prop_Decrypt_Block_Prime128 | AES::Cipher::InvCipher'              | check   | 1000
+Verus/AES/Cipher.cry         | prop_Decrypt_Block_Prime192 | AES::Cipher::InvCipher'              | check   | 1000
+Verus/AES/Cipher.cry         | prop_Decrypt_Block_Prime256 | AES::Cipher::InvCipher'              | check   | 1000
+Verus/AES/Cipher.cry         | prop_Block_CipherExample    | AES::Cipher::Cipher                  | exhaust | 1
+Verus/AES/KeyExpansion.cry   | prop_RotWord                | AES::KeyExpansion::RotWord           | check   | 10000
+Verus/AES/KeyExpansion.cry   | prop_SubWord                | AES::KeyExpansion::SubWord           | check   | 10000
+Verus/AES/KeyExpansion.cry   | prop_Rcon                   | AES::KeyExpansion::Rcon              | exhaust | 256
+Verus/AES/KeyExpansion.cry   | prop_Expand_Key128          | AES::KeyExpansion::KeyExpansion      | check   | 1000
+Verus/AES/KeyExpansion.cry   | prop_Expand_Key192          | AES::KeyExpansion::KeyExpansion      | check   | 1000
+Verus/AES/KeyExpansion.cry   | prop_Expand_Key256          | AES::KeyExpansion::KeyExpansion      | check   | 1000
+Verus/AES/KeyExpansion.cry   | prop_Expand_Key_FIPS        | AES::KeyExpansion::KeyExpansion      | exhaust | 1
+Verus/AES/Main.cry           | prop_Impl_Encrypt128        | AES::Main::Encrypt                   | check   | 1000
+Verus/AES/Main.cry           | prop_Impl_Encrypt192        | AES::Main::Encrypt                   | check   | 1000
+Verus/AES/Main.cry           | prop_Impl_Encrypt256        | AES::Main::Encrypt                   | check   | 1000
+Verus/AES/Main.cry           | prop_Impl_Decrypt128        | AES::Main::Decrypt                   | check   | 1000
+Verus/AES/Main.cry           | prop_Impl_Decrypt192        | AES::Main::Decrypt                   | check   | 1000
+Verus/AES/Main.cry           | prop_Impl_Decrypt256        | AES::Main::Decrypt                   | check   | 1000
+Verus/AES/Main.cry           | prop_Impl_AESExamples       | AES::Main::Encrypt                   | exhaust | 1
+Verus/AES/Main.cry           | prop_Impl_FIPS197_C         | AES::Main::Encrypt                   | exhaust | 1
+Verus/AES/Main.cry           | prop_Exec_Encrypt128        | AES::Main::Encrypt                   | check   | 100
+Verus/AES/Main.cry           | prop_Exec_Encrypt192        | AES::Main::Encrypt                   | check   | 100
+Verus/AES/Main.cry           | prop_Exec_Encrypt256        | AES::Main::Encrypt                   | check   | 100
+Verus/AES/Main.cry           | prop_Exec_Decrypt128        | AES::Main::Decrypt                   | check   | 100
+Verus/AES/Main.cry           | prop_Exec_Decrypt192        | AES::Main::Decrypt                   | check   | 100
+Verus/AES/Main.cry           | prop_Exec_Decrypt256        | AES::Main::Decrypt                   | check   | 100
+Verus/AES/Main.cry           | prop_Exec_AESExamples       | AES::Main::Encrypt                   | exhaust | 1
+Verus/AES/Main.cry           | prop_Exec_FIPS197_C         | AES::Main::Encrypt                   | exhaust | 1
+Verus/SHA2/Functions.cry     | prop_Ch                     | SHA2::Functions::Ch                  | check   | 10000
+Verus/SHA2/Functions.cry     | prop_Maj                    | SHA2::Functions::Maj                 | check   | 10000
+Verus/SHA2/Functions.cry     | prop_SIGMA_256_0            | SHA2::Functions::SIGMA_256_0         | check   | 10000
+Verus/SHA2/Functions.cry     | prop_SIGMA_256_1            | SHA2::Functions::SIGMA_256_1         | check   | 10000
+Verus/SHA2/Functions.cry     | prop_sigma_256_0            | SHA2::Functions::sigma_256_0         | check   | 10000
+Verus/SHA2/Functions.cry     | prop_sigma_256_1            | SHA2::Functions::sigma_256_1         | check   | 10000
+Verus/SHA2/Functions.cry     | prop_K_256                  | SHA2::Functions::K_256               | exhaust | 1
+Verus/SHA2/Preprocessing.cry | prop_H0_256                 | SHA2::Preprocessing::H0_256          | exhaust | 1
+Verus/SHA2/Preprocessing.cry | prop_Load_Block             | SHA2::Preprocessing::parse (SHA-256) | check   | 1000
+Verus/SHA2/SHA256.cry        | prop_Compress               | SHA2::Main::step (SHA-256)           | check   | 1000
+Verus/SHA2/SHA256.cry        | prop_Stream_Hash            | SHA2::Main::hash (SHA-256, bytes)    | check   | 100
+Verus/SHA2/SHA256.cry        | prop_Stream_Hash_long       | SHA2::Main::hash (SHA-256, bytes)    | check   | 3
+Verus/SHA2/SHA256.cry        | prop_Stream_Hash_FIPS       | SHA2::Main::hash (SHA-256, bytes)    | exhaust | 1
+Verus/SHA2/SHA256.cry        | prop_Stream_Chunked         | SHA2::Main::hash (SHA-256, bytes)    | check   | 100
+Verus/SHA2/SHA256.cry        | prop_Stream_Chunked_long    | SHA2::Main::hash (SHA-256, bytes)    | check   | 3
+Verus/SHA2/SHA256.cry        | prop_Stream_Chunked_FIPS    | SHA2::Main::hash (SHA-256, bytes)    | check   | 100
+Verus/HMAC/SHA256.cry        | prop_HMAC_SHA256_texts      | HMAC::Main::HMAC (SHA-256)           | check   | 30
+Verus/HMAC/SHA256.cry        | prop_HMAC_SHA256_keys       | HMAC::Main::HMAC (SHA-256)           | check   | 30
+Verus/HMAC/SHA256.cry        | prop_HMAC_SHA256_long       | HMAC::Main::HMAC (SHA-256)           | check   | 3
+Verus/HMAC/SHA256.cry        | prop_HMAC_SHA256_RFC4231    | HMAC::Main::HMAC (SHA-256)           | exhaust | 1
+Verus/HMAC/SHA256.cry        | prop_HMAC_Chunked           | HMAC::Main::HMAC (SHA-256)           | check   | 30
+Verus/HMAC/SHA256.cry        | prop_HMAC_Chunked_long      | HMAC::Main::HMAC (SHA-256)           | check   | 3
+Verus/HMAC/SHA256.cry        | prop_HMAC_Chunked_RFC4231   | HMAC::Main::HMAC (SHA-256)           | check   | 100
+Verus/HMAC/SHA256.cry        | prop_Init_Key               | HMAC::Main::HMAC_init (SHA-256)      | check   | 100

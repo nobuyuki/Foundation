@@ -1,0 +1,26 @@
+# units.txt -- the source files whose coverage scripts/check-coverage.sh
+# measures (paths relative to verus/src/). The counterpart of the SPARK
+# crate's spark/coverage/units.txt: the executable implementations, the
+# exec counterparts in sha2/functions.rs and sha2/notation.rs (the SPARK
+# list's SHA2.Functions), and the FFI exports.
+#
+# The spec layer is not listed: `cargo build` erases every spec fn, proof fn
+# and ghost block, so it has no code. A file under verus/src/ that has
+# instrumented code and is not listed fails the check, as does a listed file
+# with none.
+aes/aes_impl.rs
+aes/aes_impl/main.rs
+sha2/sha256_stream.rs
+hmac/sha256_impl.rs
+sha2/functions.rs
+sha2/notation.rs
+ffi/mod.rs
+ffi/aes_gf28.rs
+ffi/aes_sbox.rs
+ffi/aes_cipher.rs
+ffi/aes_key_expansion.rs
+ffi/aes_main.rs
+ffi/sha2_functions.rs
+ffi/sha2_preprocessing.rs
+ffi/sha2_sha256.rs
+ffi/hmac_sha256.rs

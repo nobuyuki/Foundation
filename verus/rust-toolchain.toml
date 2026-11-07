@@ -1,0 +1,4 @@
+# The toolchain Verus 0.2026.10.16.bf5bb51 requires.
+# Update together with vstd in Cargo.toml when changing the Verus version.
+[toolchain]
+channel = "1.98.1"

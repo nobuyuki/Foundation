@@ -1,0 +1,20 @@
+/*
+ * NEGATIVE CONTROL: must FAIL. check-saw.sh fails if it proves.
+ *
+ * The MIR counterpart of ../../llvm/negative/compress_reversed_feed_forward.saw.
+ *
+ * compress against `step` with the feed-forward adding h's words in
+ * reverse order (step h m - h + reverse h), with every override and the
+ * tactic of sha256_impl.saw's proof (z3 with the four sigmas
+ * uninterpreted). It runs sha256_impl.saw first, for the overrides.
+ * (SPARK's negative/compress_reversed_feed_forward.saw, which says why a
+ * stronger control of compress is out of a solver's reach.)
+ */
+
+include "../sha256_impl.saw";
+
+verify_symbol (rust "sha2::sha256_stream::compress") "sha256_stream::compress (against a reversed feed-forward)"
+  [sigma_0, sigma_1, small_sigma_0, small_sigma_1, ch, maj]
+  (compress_contract {{ \h m -> step h m - h + reverse h }})
+  (w4_unint_z3 compress_unint) compress_unint_name
+  "\\h m -> SHA256Main::step h m - h + reverse h";

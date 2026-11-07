@@ -1,0 +1,29 @@
+# explained.txt -- the coverage violations that are explained, not gaps.
+# The counterpart of the SPARK crate's spark/coverage/explained.txt.
+#
+# scripts/check-coverage.sh matches each violation (a region never executed,
+# a branch outcome never taken) against these entries and lists the ones
+# that match none as UNEXPLAINED. An entry names the source file (relative
+# to verus/src/) and the text of the line the violation starts on
+# (trimmed), so it survives edits elsewhere in the file:
+#
+#   file | line text | why it is not executed by the FFI properties
+#
+# A gap in the targeted tests is closed with a property, never listed here.
+#
+# Ghost code is not an entry here: `cargo build` erases spec fns, proof fns,
+# proof blocks, asserts and invariants, so rustc emits no code and no
+# coverage region for them.
+#
+# The entries below are the FFI exports' run-time checks of what Cryptol's
+# types already ensure (src/ffi/mod.rs: "check at run time each
+# precondition ... that Cryptol's types are meant to ensure"). Cryptol
+# never calls an export with arguments outside its type, so a property can
+# never take the failing side. An entry's line text may occur more than
+# once in a file; it explains every occurrence.
+
+ffi/mod.rs | assert!(k == 128 || k == 192 || k == 256, "not an AES key size"); | check_key_size: Cryptol passes k only under Types.cry's `Key k` (128, 192 or 256), so when k is neither 128 nor 192 it is 256 and the last operand is never false.
+ffi/aes_cipher.rs | _ => unreachable!(), | the dispatch on k after check_key_size, which has already rejected every k but 128, 192 and 256 (Cryptol's `Key k`).
+ffi/aes_key_expansion.rs | _ => unreachable!(), | the dispatch on k after check_key_size, which has already rejected every k but 128, 192 and 256 (Cryptol's `Key k`).
+ffi/aes_main.rs | _ => unreachable!(), | the dispatch on k after check_key_size, which has already rejected every k but 128, 192 and 256 (Cryptol's `Key k`).
+ffi/hmac_sha256.rs | assert!(k < MAX_BYTES && n < MAX_TEXT); | the bounds of HMAC's preconditions, which Cryptol's `61 >= width k` and `61 >= width n` ensure (k, n < 2^61); a test cannot pass a key or a text of 2^61 bytes.

@@ -1,0 +1,198 @@
+/*
+ * The Verus crate's round transformations and block ciphers, checked
+ * against algorithms/AES/Cipher.cry through Cryptol's FFI. The counterpart
+ * of the SPARK crate's spark/cryptol/SPARK/AES/Cipher.cry.
+ *
+ * The foreign functions are the C exports of the Verus crate's FFI library
+ * (verus/ffi/), which verus/scripts/check-ffi.sh links here as Cipher.so.
+ * They have no Cryptol body on purpose (see GF28.cry). Each is an
+ * executable function of aes_impl, proved equal to the spec function that
+ * transcribes the Cipher.cry function of its property, so its samples check
+ * the spec's faithfulness too. The SPARK crate checks its ghost spec's
+ * Cipher, InvCipher and InvCipher' at a handful of tests each and its
+ * executable Encrypt_Block, Decrypt_Block and Decrypt_Block_Prime at 1,000;
+ * a Verus spec function cannot be executed, so only the second are here
+ * (prop_Cipher128 and its siblings have no counterpart, nor has
+ * prop_CipherExample, which prop_Block_CipherExample restates).
+ *
+ * The domains are 2^32 (the column steps), 2^128 (one block) and 2^256 (a
+ * block and a round key) or more (a key schedule and a block), so each
+ * property is a :check, with the test count stated in
+ * verus/cryptol/properties.txt. The ciphers are checked at each key size
+ * k = 128, 192 and 256, through one export each: Cryptol passes {k} to it
+ * as a leading size_t.
+ *
+ * algorithms::AES::Cipher declares Cipher and InvCipher foreign, with a
+ * Cryptol body and a Rust library that this repository does not build.
+ * check-ffi.sh fails if that library is ever loaded, so these properties
+ * compare Verus with the Cryptol bodies.
+ */
+module Verus::AES::Cipher where
+
+import algorithms::AES::Types
+import algorithms::AES::Cipher
+import algorithms::AES::KeyExpansion (KeyExpansion)
+
+/** aes_impl::sub_bytes, proved equal to the spec's SubBytes. */
+foreign verus_sub_bytes : Block -> Block
+
+/** aes_impl::inv_sub_bytes, proved equal to the spec's InvSubBytes. */
+foreign verus_inv_sub_bytes : Block -> Block
+
+/** aes_impl::shift_rows, proved equal to the spec's ShiftRows. */
+foreign verus_shift_rows : Block -> Block
+
+/** aes_impl::inv_shift_rows, proved equal to the spec's InvShiftRows. */
+foreign verus_inv_shift_rows : Block -> Block
+
+/** aes_impl::mix_column, proved equal to the spec's MixColumnsStep. */
+foreign verus_mix_column : AESWord -> AESWord
+
+/** aes_impl::mix_columns, proved equal to the spec's MixColumns. */
+foreign verus_mix_columns : Block -> Block
+
+/** aes_impl::inv_mix_column, proved equal to the spec's InvMixColumnsStep. */
+foreign verus_inv_mix_column : AESWord -> AESWord
+
+/** aes_impl::inv_mix_columns, proved equal to the spec's InvMixColumns. */
+foreign verus_inv_mix_columns : Block -> Block
+
+/** aes_impl::add_round_key, proved equal to the spec's AddRoundKey. */
+foreign verus_add_round_key : Block -> Block -> Block
+
+/** aes_impl::round, proved equal to the spec's Round. */
+foreign verus_round : Block -> Block -> Block
+
+/** aes_impl::inv_round, proved equal to the spec's InvRound. */
+foreign verus_inv_round : Block -> Block -> Block
+
+/** aes_impl::inv_round_prime, proved equal to the spec's InvRound'. */
+foreign verus_inv_round_prime : Block -> Block -> Block
+
+/** aes_impl::encrypt_block, proved equal to the spec's Cipher. */
+foreign verus_encrypt_block : {k} (Key k) => [Nr k + 1]Block -> Block -> Block
+
+/** aes_impl::decrypt_block, proved equal to the spec's InvCipher. */
+foreign verus_decrypt_block : {k} (Key k) => [Nr k + 1]Block -> Block -> Block
+
+/** aes_impl::decrypt_block_prime, proved equal to the spec's InvCipher'. */
+foreign verus_decrypt_block_prime : {k} (Key k) => [Nr k + 1]Block -> Block -> Block
+
+/** The executable sub_bytes is Cipher.cry's SubBytes. */
+prop_SubBytes : Block -> Bit
+property prop_SubBytes bs = verus_sub_bytes bs == SubBytes bs
+
+/** The executable inv_sub_bytes is Cipher.cry's InvSubBytes. */
+prop_InvSubBytes : Block -> Bit
+property prop_InvSubBytes bs = verus_inv_sub_bytes bs == InvSubBytes bs
+
+/** The executable shift_rows is Cipher.cry's ShiftRows. */
+prop_ShiftRows : Block -> Bit
+property prop_ShiftRows bs = verus_shift_rows bs == ShiftRows bs
+
+/** The executable inv_shift_rows is Cipher.cry's InvShiftRows. */
+prop_InvShiftRows : Block -> Bit
+property prop_InvShiftRows bs = verus_inv_shift_rows bs == InvShiftRows bs
+
+/** The executable mix_column is Cipher.cry's MixColumnsStep. */
+prop_MixColumnsStep : AESWord -> Bit
+property prop_MixColumnsStep s = verus_mix_column s == MixColumnsStep s
+
+/** The executable mix_columns is Cipher.cry's MixColumns. */
+prop_MixColumns : Block -> Bit
+property prop_MixColumns bs = verus_mix_columns bs == MixColumns bs
+
+/** The executable inv_mix_column is Cipher.cry's InvMixColumnsStep. */
+prop_InvMixColumnsStep : AESWord -> Bit
+property prop_InvMixColumnsStep s = verus_inv_mix_column s == InvMixColumnsStep s
+
+/** The executable inv_mix_columns is Cipher.cry's InvMixColumns. */
+prop_InvMixColumns : Block -> Bit
+property prop_InvMixColumns bs = verus_inv_mix_columns bs == InvMixColumns bs
+
+/** The executable add_round_key is Cipher.cry's AddRoundKey. */
+prop_AddRoundKey : Block -> Block -> Bit
+property prop_AddRoundKey bs w = verus_add_round_key bs w == AddRoundKey bs w
+
+/** The executable round is Cipher.cry's Round. */
+prop_Round : Block -> Block -> Bit
+property prop_Round bs w = verus_round bs w == Round bs w
+
+/** The executable inv_round is Cipher.cry's InvRound. */
+prop_InvRound : Block -> Block -> Bit
+property prop_InvRound bs w = verus_inv_round bs w == InvRound bs w
+
+/** The executable inv_round_prime is Cipher.cry's InvRound'. */
+prop_InvRound' : Block -> Block -> Bit
+property prop_InvRound' bs w = verus_inv_round_prime bs w == InvRound' bs w
+
+/**
+ * The executable encrypt_block is Cipher.cry's Cipher at key size k, on
+ * random round keys (any [Nr k + 1]Block, as the Cryptol types them, not
+ * only key schedules) and random blocks.
+ */
+prop_Encrypt_Block : {k} (Key k) => [Nr k + 1]Block -> Block -> Bit
+prop_Encrypt_Block w in = verus_encrypt_block`{k} w in == Cipher`{k} w in
+
+/** The executable decrypt_block is Cipher.cry's InvCipher, at key size k. */
+prop_Decrypt_Block : {k} (Key k) => [Nr k + 1]Block -> Block -> Bit
+prop_Decrypt_Block w in = verus_decrypt_block`{k} w in == InvCipher`{k} w in
+
+/**
+ * The executable decrypt_block_prime is Cipher.cry's InvCipher', at key
+ * size k.
+ */
+prop_Decrypt_Block_Prime : {k} (Key k) => [Nr k + 1]Block -> Block -> Bit
+prop_Decrypt_Block_Prime w in =
+  verus_decrypt_block_prime`{k} w in == InvCipher'`{k} w in
+
+/** prop_Encrypt_Block at k = 128. */
+prop_Encrypt_Block128 : [Nr 128 + 1]Block -> Block -> Bit
+property prop_Encrypt_Block128 = prop_Encrypt_Block`{128}
+
+/** prop_Encrypt_Block at k = 192. */
+prop_Encrypt_Block192 : [Nr 192 + 1]Block -> Block -> Bit
+property prop_Encrypt_Block192 = prop_Encrypt_Block`{192}
+
+/** prop_Encrypt_Block at k = 256. */
+prop_Encrypt_Block256 : [Nr 256 + 1]Block -> Block -> Bit
+property prop_Encrypt_Block256 = prop_Encrypt_Block`{256}
+
+/** prop_Decrypt_Block at k = 128. */
+prop_Decrypt_Block128 : [Nr 128 + 1]Block -> Block -> Bit
+property prop_Decrypt_Block128 = prop_Decrypt_Block`{128}
+
+/** prop_Decrypt_Block at k = 192. */
+prop_Decrypt_Block192 : [Nr 192 + 1]Block -> Block -> Bit
+property prop_Decrypt_Block192 = prop_Decrypt_Block`{192}
+
+/** prop_Decrypt_Block at k = 256. */
+prop_Decrypt_Block256 : [Nr 256 + 1]Block -> Block -> Bit
+property prop_Decrypt_Block256 = prop_Decrypt_Block`{256}
+
+/** prop_Decrypt_Block_Prime at k = 128. */
+prop_Decrypt_Block_Prime128 : [Nr 128 + 1]Block -> Block -> Bit
+property prop_Decrypt_Block_Prime128 = prop_Decrypt_Block_Prime`{128}
+
+/** prop_Decrypt_Block_Prime at k = 192. */
+prop_Decrypt_Block_Prime192 : [Nr 192 + 1]Block -> Block -> Bit
+property prop_Decrypt_Block_Prime192 = prop_Decrypt_Block_Prime`{192}
+
+/** prop_Decrypt_Block_Prime at k = 256. */
+prop_Decrypt_Block_Prime256 : [Nr 256 + 1]Block -> Block -> Bit
+property prop_Decrypt_Block_Prime256 = prop_Decrypt_Block_Prime`{256}
+
+/**
+ * algorithms/AES/Tests.cry's CipherExample [FIPS-PUB-197 Appendix B]
+ * through the executable encrypt_block, decrypt_block and
+ * decrypt_block_prime. The vectors are copied from Tests.cry; the round
+ * keys are KeyExpansion`{128} of its key.
+ */
+property prop_Block_CipherExample =
+    verus_encrypt_block`{128}       key input  == output
+ /\ verus_decrypt_block`{128}       key output == input
+ /\ verus_decrypt_block_prime`{128} key output == input
+  where
+    input  = split 0x3243f6a8885a308d313198a2e0370734
+    key    = KeyExpansion`{128} (split (split 0x2b7e151628aed2a6abf7158809cf4f3c))
+    output = split 0x3925841d02dc09fbdc118597196a0b32

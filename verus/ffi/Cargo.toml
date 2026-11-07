@@ -1,0 +1,28 @@
+# The FFI library: the crate's executable functions exported through C, for
+# Cryptol's `foreign` declarations under ../cryptol/ (the counterpart of the
+# SPARK crate's spark/foundation_spark_ffi.gpr). Built by
+# ../scripts/check-ffi.sh; the sources are ../src/ffi/, which the crate
+# itself does not compile.
+[package]
+name = "foundation_verus_ffi"
+version = "0.1.0-dev"
+edition = "2024"
+license = "Apache-2.0"
+publish = false
+
+[lib]
+path = "lib.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+foundation_verus = { path = ".." }
+
+# Its own workspace, so that the crate's `cargo verus verify` does not see it.
+[workspace]
+
+# The exports are built optimized, with the checks a debug build has:
+# overflow (which the proofs exclude in the verified code) and debug
+# assertions. Bounds checks are always on.
+[profile.release]
+overflow-checks = true
+debug-assertions = true

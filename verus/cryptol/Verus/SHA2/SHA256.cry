@@ -1,0 +1,226 @@
+/*
+ * The Verus crate's SHA-256, checked against algorithms/SHA2/SHA256.cry
+ * (SHA2's Main at SHA-256's parameters) through Cryptol's FFI: the
+ * executable sha256_stream's compress, the one-shot hash, and init, update
+ * on each chunk of a random chunking, and finalize (hash_chunked). The
+ * counterpart of the SPARK crate's spark/cryptol/SPARK/SHA2/SHA256.cry.
+ *
+ * The foreign functions are the C exports of the Verus crate's FFI library
+ * (verus/ffi/), which verus/scripts/check-ffi.sh links here as SHA256.so.
+ * They have no Cryptol body on purpose (see Verus/AES/GF28.cry).
+ *
+ * The SPARK crate also checks its ghost spec's step, hash (on bits, at
+ * lengths that are not whole bytes too) and Hash_Bytes here (prop_step,
+ * prop_hash, prop_hash_bits, prop_hash_FIPS, prop_Hash_Bytes,
+ * prop_Hash_Bytes_FIPS). A Verus spec function cannot be executed, so
+ * those have no counterpart; the executables are proved equal to them
+ * (compress = step; hash and hash_chunked = hash_bytes, and so = the
+ * spec's hash on the bits by lemma_hash_bytes), and so check the spec
+ * through the proofs, on whole bytes. prop_Compress checks against the same
+ * Main256::step as prop_step, and prop_Stream_Hash_FIPS includes
+ * prop_hash_FIPS's check of SHA256::hash itself against the digests.
+ *
+ * step is not exported by algorithms::SHA2::SHA256: SHA256.cry instantiates
+ * Main privately, as SHA256. This module instantiates Main with the same
+ * parameters, copied from SHA256.cry, as Main256, and compares compress
+ * with Main256::step. hash is compared with SHA256.cry's own hash
+ * (SHA256::hash below), which is that instance's hash.
+ *
+ * The functions take the message as [n][8], and are compared with
+ * SHA256::hash (join M). The [256] digest comes back as [32][8].
+ *
+ * The testing is targeted. A length is a type, so each property names the
+ * lengths it covers: the padding boundaries 0, 1, 55, 56, 63, 64, 65, 119,
+ * 120, 127 and 128 bytes (55 is the longest message whose padding fits one
+ * block, 119 two), the FIPS 180-4 examples, and a fixed list of longer
+ * lengths drawn at random once by the SPARK crate (Python's
+ * random.Random(20261018).sample(range(301, 4001), 10)). The random
+ * contents are a :check over the message bytes.
+ */
+module Verus::SHA2::SHA256 where
+
+import algorithms::SHA2::SHA256 as SHA256
+import algorithms::SHA2::Preprocessing (H0_256)
+import algorithms::SHA2::Functions ( SIGMA_256_0
+                                   , SIGMA_256_1
+                                   , sigma_256_0
+                                   , sigma_256_1
+                                   , K_256)
+
+/** algorithms::SHA2::Main at SHA256.cry's parameters, as SHA256.cry has it. */
+import algorithms::SHA2::Main as Main256 where
+  type d = 256
+  type w = 32
+  type Klen = 64
+
+  H0 = H0_256
+  K = K_256
+
+  SIGMA_0 = SIGMA_256_0
+  SIGMA_1 = SIGMA_256_1
+  sigma_0 = sigma_256_0
+  sigma_1 = sigma_256_1
+
+/**
+ * sha256_stream::compress, proved equal to the spec's step at SHA256's
+ * parameters.
+ */
+foreign verus_compress : [8][32] -> [16][32] -> [8][32]
+
+/**
+ * sha256_stream::hash, proved equal to the spec's hash_bytes, and so, by
+ * sha256_bytes::lemma_hash_bytes, to the spec's hash on the bits.
+ */
+foreign verus_hash : {n} (fin n, 61 >= width n) => [n][8] -> [32][8]
+
+/**
+ * sha256_stream::hash_chunked: init, update on each chunk, finalize,
+ * proved equal to the spec's hash_bytes for every chunking. The [c][64]
+ * are the ends of the chunks, in order and at most n; a last chunk runs to
+ * n.
+ */
+foreign verus_hash_chunked :
+  {n, c} (fin n, 61 >= width n, fin c, 64 >= c) =>
+    [n][8] -> [c][64] -> [32][8]
+
+/** The longest of the fixed longer lengths, in bytes. */
+type LongBytes = 3837
+
+/** The number of cut points in a random chunking. */
+type Cuts = 12
+
+/** Random cut points as the ends of a chunking of n bytes: sorted, <= n. */
+chunking : {n} (fin n, 61 >= width n) => [Cuts][64] -> [Cuts][64]
+chunking xs = sort [ x % (`n + 1) | x <- xs ]
+
+// ---------------------------------------------------------------- compress
+
+/** The executable compress is Main.cry's step at SHA256.cry's parameters. */
+prop_Compress : [8][32] -> [16][32] -> Bit
+property prop_Compress H M = verus_compress H M == Main256::step H M
+
+// ---------------------------------------------------------------- sha256_stream
+
+/** The executable hash is SHA256::hash on whole bytes. */
+streamHash : {n} (fin n, 61 >= width n) => [n][8] -> Bit
+streamHash M = join (verus_hash M) == SHA256::hash (join M)
+
+/** The executable hash is SHA256::hash at the boundary lengths. */
+prop_Stream_Hash : [128][8] -> Bit
+property prop_Stream_Hash ms =
+     streamHash (take`{0} ms)
+  /\ streamHash (take`{1} ms)
+  /\ streamHash (take`{55} ms)
+  /\ streamHash (take`{56} ms)
+  /\ streamHash (take`{63} ms)
+  /\ streamHash (take`{64} ms)
+  /\ streamHash (take`{65} ms)
+  /\ streamHash (take`{119} ms)
+  /\ streamHash (take`{120} ms)
+  /\ streamHash (take`{127} ms)
+  /\ streamHash (take`{128} ms)
+
+/** The executable hash at the fixed longer lengths. */
+prop_Stream_Hash_long : [LongBytes][8] -> Bit
+property prop_Stream_Hash_long ms =
+     streamHash (take`{562} ms)
+  /\ streamHash (take`{1123} ms)
+  /\ streamHash (take`{1650} ms)
+  /\ streamHash (take`{2174} ms)
+  /\ streamHash (take`{2358} ms)
+  /\ streamHash (take`{2533} ms)
+  /\ streamHash (take`{3499} ms)
+  /\ streamHash (take`{3508} ms)
+  /\ streamHash (take`{3810} ms)
+  /\ streamHash (take`{3837} ms)
+
+/**
+ * The executable hash gives the published FIPS 180-4 digests, and so does
+ * SHA256::hash (the SPARK crate checks the second in prop_hash_FIPS, with
+ * its ghost spec's hash).
+ */
+property prop_Stream_Hash_FIPS =
+     SHA256::hash (join ([] : [0][8])) == digestEmpty
+  /\ SHA256::hash (join fipsAbc) == digestAbc
+  /\ SHA256::hash (join fips448) == digest448
+  /\ SHA256::hash (join fips896) == digest896
+  /\ join (verus_hash`{0} []) == digestEmpty
+  /\ join (verus_hash fipsAbc) == digestAbc
+  /\ join (verus_hash fips448) == digest448
+  /\ join (verus_hash fips896) == digest896
+
+/**
+ * hash_chunked (init, update on each chunk, finalize), with the chunking
+ * given by 12 random cut points (13 chunks, any of them possibly empty), is
+ * SHA256::hash on whole bytes.
+ */
+streamChunked : {n} (fin n, 61 >= width n) => [n][8] -> [Cuts][64] -> Bit
+streamChunked M xs =
+  join (verus_hash_chunked M (chunking`{n} xs)) == SHA256::hash (join M)
+
+/** The executable hash_chunked at the boundary lengths, each cut at random. */
+prop_Stream_Chunked : [128][8] -> [11][Cuts][64] -> Bit
+property prop_Stream_Chunked ms xss =
+     streamChunked (take`{0} ms) (xss @ 0)
+  /\ streamChunked (take`{1} ms) (xss @ 1)
+  /\ streamChunked (take`{55} ms) (xss @ 2)
+  /\ streamChunked (take`{56} ms) (xss @ 3)
+  /\ streamChunked (take`{63} ms) (xss @ 4)
+  /\ streamChunked (take`{64} ms) (xss @ 5)
+  /\ streamChunked (take`{65} ms) (xss @ 6)
+  /\ streamChunked (take`{119} ms) (xss @ 7)
+  /\ streamChunked (take`{120} ms) (xss @ 8)
+  /\ streamChunked (take`{127} ms) (xss @ 9)
+  /\ streamChunked (take`{128} ms) (xss @ 10)
+
+/** The executable hash_chunked at the fixed longer lengths, cut at random. */
+prop_Stream_Chunked_long : [LongBytes][8] -> [10][Cuts][64] -> Bit
+property prop_Stream_Chunked_long ms xss =
+     streamChunked (take`{562} ms) (xss @ 0)
+  /\ streamChunked (take`{1123} ms) (xss @ 1)
+  /\ streamChunked (take`{1650} ms) (xss @ 2)
+  /\ streamChunked (take`{2174} ms) (xss @ 3)
+  /\ streamChunked (take`{2358} ms) (xss @ 4)
+  /\ streamChunked (take`{2533} ms) (xss @ 5)
+  /\ streamChunked (take`{3499} ms) (xss @ 6)
+  /\ streamChunked (take`{3508} ms) (xss @ 7)
+  /\ streamChunked (take`{3810} ms) (xss @ 8)
+  /\ streamChunked (take`{3837} ms) (xss @ 9)
+
+/** The executable hash_chunked gives the FIPS 180-4 digests, cut at random. */
+prop_Stream_Chunked_FIPS : [4][Cuts][64] -> Bit
+property prop_Stream_Chunked_FIPS xss =
+     join (verus_hash_chunked`{0} [] (chunking`{0} (xss @ 0))) == digestEmpty
+  /\ join (verus_hash_chunked fipsAbc (chunking`{3} (xss @ 1))) == digestAbc
+  /\ join (verus_hash_chunked fips448 (chunking`{56} (xss @ 2))) == digest448
+  /\ join (verus_hash_chunked fips896 (chunking`{112} (xss @ 3))) == digest896
+
+// ---------------------------------------------------------------- FIPS 180-4
+
+/** The FIPS 180-4 SHA-256 example message "abc" [FIPS 180-4 Appendix B.1]. */
+fipsAbc : [3][8]
+fipsAbc = "abc"
+
+/** The 448-bit example message [FIPS 180-4 Appendix B.2]. */
+fips448 : [56][8]
+fips448 = "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq"
+
+/** The 896-bit example message [NIST CSOR SHA-256 examples]. */
+fips896 : [112][8]
+fips896 = "abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu"
+
+/** The published digest of "" (the empty message). */
+digestEmpty : [256]
+digestEmpty = 0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+
+/** The published digest of "abc". */
+digestAbc : [256]
+digestAbc = 0xba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad
+
+/** The published digest of the 448-bit example. */
+digest448 : [256]
+digest448 = 0x248d6a61d20638b8e5c026930c3e6039a33ce45964ff2167f6ecedd419db06c1
+
+/** The published digest of the 896-bit example. */
+digest896 : [256]
+digest896 = 0xcf5b16a778af8380036ce59e7b0492370b249b11e8f07a51afac45037afee9d1

@@ -1,0 +1,96 @@
+/*
+ * What the SHA-256 and HMAC-SHA-256 implementation's SAW scripts share:
+ * the bitcode, NSA's Cryptol, and the contracts, one per shape of Rust
+ * function (as SPARK's saw/sha256_impl_common.saw).
+ *
+ * Run from verus/saw/llvm/ by verus/scripts/check-saw.sh (see
+ * aes_impl_common.saw for the bitcode and ../obj/symbols.saw). Not run by
+ * CI: see verus/doc/saw.md.
+ */
+
+enable_experimental;
+
+/*
+ * NSA's Cryptol: SHA-2's Main at SHA-256's parameters (../SHA256Main.cry
+ * says why it is a module of ours, which only instantiates Main), and
+ * HMAC's Main, imported unmodified.
+ */
+import "../SHA256Main.cry";
+import "../../../algorithms/SHA2/Notation.cry";
+import "../../../algorithms/SHA2/Functions.cry";
+import "../../../algorithms/HMAC/Main.cry";
+
+crate <- llvm_load_module "../obj/foundation_verus.bc";
+include "../obj/symbols.saw";
+
+/*
+ * The LLVM types of the Rust ones: u32 is i32, u8 is i8; the hash value
+ * [u32; 8] and the block [u32; 16] are arrays of i32 in memory, element j
+ * Cryptol's element j of [8][32] and [16][32].
+ */
+let word_t = llvm_int 32;
+let byte_t = llvm_int 8;
+let hash_value_t = llvm_array 8 word_t;
+let block_t = llvm_array 16 word_t;
+
+/*
+ * fn compress(h: &mut [u32; 8], m: &[u32; 16]): two pointers, h written in
+ * place, m read-only. f is SHA256Main::step : [8][32] -> [16][32] ->
+ * [8][32].
+ */
+let compress_contract (f : Term) = do {
+  h <- llvm_fresh_var "h" hash_value_t;
+  hp <- llvm_alloc hash_value_t;
+  llvm_points_to hp (llvm_term h);
+  m <- llvm_fresh_var "m" block_t;
+  mp <- llvm_alloc_readonly block_t;
+  llvm_points_to mp (llvm_term m);
+  llvm_execute_func [hp, mp];
+  llvm_points_to hp (llvm_term {{ f h m }});
+};
+
+/*
+ * A &[u8] argument of n bytes: rustc passes a slice as two arguments, the
+ * data pointer and the length (i64). The bytes are read-only, byte i
+ * element i of Cryptol's [n][8], its most significant bit first, so the
+ * message's bits are `join msg`, as hash and HMAC take them.
+ */
+let byte_slice_arg (n : Int) (name : String) = do {
+  xs <- llvm_fresh_var name (llvm_array n byte_t);
+  p <- llvm_alloc_readonly (llvm_array n byte_t);
+  llvm_points_to p (llvm_term xs);
+  return (xs, p, llvm_term {{ `n : [64] }});
+};
+
+/*
+ * fn hash(M: &[u8]) -> [u8; 32], at n bytes: the 32-byte digest through
+ * a hidden first pointer (sret). f : [n][8] -> [32][8].
+ */
+let hash_contract (n : Int) (f : Term) = do {
+  (msg, mp, ml) <- byte_slice_arg n "msg";
+  ret <- llvm_alloc (llvm_array 32 byte_t);
+  llvm_execute_func [ret, mp, ml];
+  llvm_points_to ret (llvm_term {{ f msg }});
+};
+
+/*
+ * fn hmac_sha256(key: &[u8], text: &[u8]) -> [u8; 32], at k and n bytes.
+ * f : [k][8] -> [n][8] -> [32][8].
+ */
+let hmac_contract (k : Int) (n : Int) (f : Term) = do {
+  (key, kp, kl) <- byte_slice_arg k "key";
+  (text, tp, tl) <- byte_slice_arg n "text";
+  ret <- llvm_alloc (llvm_array 32 byte_t);
+  llvm_execute_func [ret, kp, kl, tp, tl];
+  llvm_points_to ret (llvm_term {{ f key text }});
+};
+
+/*
+ * llvm_verify of one function against a Cryptol term, timed, with the
+ * line check-saw.sh records (as aes_impl_common.saw's).
+ */
+let verify_symbol symbol name overrides contract tactic tactic_name cryptol = do {
+  result <- time (llvm_verify crate symbol overrides false contract tactic);
+  print (str_concat (str_concat (str_concat (str_concat (str_concat "RESULT proved " name) " = ") cryptol) " [") (str_concat tactic_name "]"));
+  return result;
+};

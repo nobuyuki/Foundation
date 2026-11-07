@@ -1,0 +1,73 @@
+/*
+ * The Verus crate's SHA-2 functions at SHA-256's word size, checked against
+ * algorithms/SHA2/Functions.cry through Cryptol's FFI. The counterpart of
+ * the SPARK crate's spark/cryptol/SPARK/SHA2/Functions.cry.
+ *
+ * The foreign functions are the C exports of the Verus crate's FFI library
+ * (verus/ffi/), which verus/scripts/check-ffi.sh links here as
+ * Functions.so. They have no Cryptol body on purpose (see
+ * Verus/AES/GF28.cry). They are the executable copies of the spec
+ * functions (sha2::functions::exec), each proved equal to its spec
+ * function, where the SPARK crate exports the ghost spec functions.
+ *
+ * Ch and Maj are polymorphic in the Cryptol; SHA-256 uses them at [32], and
+ * the Verus spec's SHA256 instance has them there. The domains are 2^^96
+ * for Ch and Maj and 2^^32 for the four SIGMA/sigma functions, so each is a
+ * :check, with the test count stated in verus/cryptol/properties.txt.
+ * K_256 is a constant: one test.
+ */
+module Verus::SHA2::Functions where
+
+import algorithms::SHA2::Functions
+
+/** functions::exec::Ch, proved equal to the spec's Ch at [32]. */
+foreign verus_Ch : [32] -> [32] -> [32] -> [32]
+
+/** functions::exec::Maj, proved equal to the spec's Maj at [32]. */
+foreign verus_Maj : [32] -> [32] -> [32] -> [32]
+
+/** functions::exec::SIGMA_256_0. */
+foreign verus_SIGMA_256_0 : [32] -> [32]
+
+/** functions::exec::SIGMA_256_1. */
+foreign verus_SIGMA_256_1 : [32] -> [32]
+
+/** functions::exec::sigma_256_0. */
+foreign verus_sigma_256_0 : [32] -> [32]
+
+/** functions::exec::sigma_256_1. */
+foreign verus_sigma_256_1 : [32] -> [32]
+
+/**
+ * functions::exec::K_256, the executable constant, proved equal to the
+ * spec's K_256. A foreign function needs an argument, so the constant is a
+ * function of ().
+ */
+foreign verus_K_256 : () -> [64][32]
+
+/** The executable Ch is Functions.cry's Ch at [32]. */
+prop_Ch : [32] -> [32] -> [32] -> Bit
+property prop_Ch x y z = verus_Ch x y z == Ch (x, y, z)
+
+/** The executable Maj is Functions.cry's Maj at [32]. */
+prop_Maj : [32] -> [32] -> [32] -> Bit
+property prop_Maj x y z = verus_Maj x y z == Maj (x, y, z)
+
+/** The executable SIGMA_256_0 is Functions.cry's. */
+prop_SIGMA_256_0 : [32] -> Bit
+property prop_SIGMA_256_0 x = verus_SIGMA_256_0 x == SIGMA_256_0 x
+
+/** The executable SIGMA_256_1 is Functions.cry's. */
+prop_SIGMA_256_1 : [32] -> Bit
+property prop_SIGMA_256_1 x = verus_SIGMA_256_1 x == SIGMA_256_1 x
+
+/** The executable sigma_256_0 is Functions.cry's sigma_256_0. */
+prop_sigma_256_0 : [32] -> Bit
+property prop_sigma_256_0 x = verus_sigma_256_0 x == sigma_256_0 x
+
+/** The executable sigma_256_1 is Functions.cry's sigma_256_1. */
+prop_sigma_256_1 : [32] -> Bit
+property prop_sigma_256_1 x = verus_sigma_256_1 x == sigma_256_1 x
+
+/** The executable K_256 is Functions.cry's K_256 (a closed Bit: one test). */
+property prop_K_256 = verus_K_256 () == K_256

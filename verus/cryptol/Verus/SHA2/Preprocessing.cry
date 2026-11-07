@@ -1,0 +1,46 @@
+/*
+ * The Verus crate's SHA-256 preprocessing, checked against
+ * algorithms/SHA2/Preprocessing.cry through Cryptol's FFI: the initial hash
+ * value H0_256, and the parse of one block. The counterpart of the SPARK
+ * crate's spark/cryptol/SPARK/SHA2/Preprocessing.cry.
+ *
+ * The foreign functions are the C exports of the Verus crate's FFI library
+ * (verus/ffi/), which verus/scripts/check-ffi.sh links here as
+ * Preprocessing.so. They have no Cryptol body on purpose (see
+ * Verus/AES/GF28.cry).
+ *
+ * The SPARK crate also checks its ghost spec's pad and parse here (prop_pad,
+ * prop_parse). A Verus spec function cannot be executed, and the crate has
+ * no executable pad or parse of a whole message (the streaming hash pads
+ * its last block in place), so those have no counterpart: pad and parse are
+ * checked through the proofs of the hashes (Verus/SHA2/SHA256.cry).
+ *
+ * The executable sha256_stream::load_block parses one block of bytes; it is
+ * checked against parse`{32, 1} of the block's bits (prop_Load_Block).
+ */
+module Verus::SHA2::Preprocessing where
+
+import algorithms::SHA2::Preprocessing
+
+/**
+ * preprocessing::exec::H0_256, the executable constant, proved equal to
+ * the spec's H0_256, as a function of ().
+ */
+foreign verus_H0_256 : () -> [8][32]
+
+/**
+ * sha256_stream::load_block, which parses one block of bytes into words,
+ * proved equal to the spec's parse of the block's bits.
+ */
+foreign verus_load_block : [64][8] -> [16][32]
+
+/** The executable H0_256 is Preprocessing.cry's (a closed Bit: one test). */
+property prop_H0_256 = verus_H0_256 () == H0_256
+
+/**
+ * The executable load_block is Preprocessing.cry's parse`{32, 1} on the
+ * bits of its 64 bytes: the parse of one block, which the streaming hash
+ * applies to each block as it reaches it.
+ */
+prop_Load_Block : [64][8] -> Bit
+property prop_Load_Block bytes = verus_load_block bytes == (parse`{32, 1} (join bytes)) @ 0

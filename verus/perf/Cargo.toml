@@ -1,0 +1,62 @@
+# The size and performance harness: the crate's AES
+# (foundation_verus::aes::aes_impl) built as release code, against NSA's
+# Rust (algorithms/AES/rust/, driven by perf/rust/). The counterpart of the
+# SPARK crate's spark/perf/perf.gpr. Not part of the crate, not verified,
+# and not scanned by the trust-surface gate (src/ only).
+# scripts/perf-aes.sh builds every variant of this package and of the Rust
+# and prints the tables; doc/performance.md says what they show.
+#
+# One build is one profile below. perf.gpr's matrix (PERF_OPT, PERF_CHECKS,
+# PERF_LTO, PERF_OS) is Cargo's profiles here: the optimization level, the
+# checks and LTO are profile settings, and std's Instant is the clock on
+# every system (perf.gpr's Perf_Clock bodies), so there is no PERF_OS.
+# perf.adc's Assertion_Policy (Ignore) has no counterpart to set: Verus
+# erases every spec, proof and ghost item from the build, so none is
+# compiled in.
+[package]
+name = "perf_aes"
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+publish = false
+
+# perf/src/perf_aes.ads and .adb: the wrappers.
+[lib]
+name = "perf_aes"
+path = "src/perf_aes.rs"
+
+# perf/src/perf_bench.adb: the benchmark.
+[[bin]]
+name = "perf_bench"
+path = "src/perf_bench.rs"
+
+[dependencies]
+foundation_verus = { path = ".." }
+
+# Its own workspace, so that the crate's `cargo verus verify` does not see it.
+[workspace]
+
+# The profiles of perf/rust/Cargo.toml, for the crate: release, opt-level 2
+# or 3, fat LTO and one codegen unit, no debug info; otherwise the release
+# default (overflow checks off, debug assertions off, panic = "unwind").
+# Slice bounds checks stay. Both sides are built with the same rustc
+# (../rust-toolchain.toml), so the builds differ only in the source.
+[profile.perf-o2]
+inherits = "release"
+opt-level = 2
+lto = "fat"
+codegen-units = 1
+
+[profile.perf-o3]
+inherits = "release"
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+
+# perf-o3 with the checks a debug build has: overflow checks and debug
+# assertions. The counterpart of perf.gpr's PERF_CHECKS=on (spark-O3-checks),
+# which keeps the run-time checks the proof made redundant.
+[profile.perf-o3-checks]
+inherits = "perf-o3"
+overflow-checks = true
+debug-assertions = true

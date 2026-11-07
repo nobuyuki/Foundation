@@ -1,0 +1,20 @@
+/*
+ * NEGATIVE CONTROL: must FAIL. check-saw.sh fails if it proves.
+ *
+ * The MIR counterpart of ../../llvm/negative/hmac_reversed_key.saw.
+ *
+ * hmac_sha256 at a 100-byte key and a 3-byte text against HMAC of the
+ * key's bytes in reverse order, with compress's and hash's (at 100
+ * bytes) proofs as the overrides and the tactic of sha256_impl.saw.
+ * (SPARK's negative/hmac_reversed_key.saw.)
+ */
+
+include "../sha256_impl.saw";
+
+verify_symbol (rust "hmac::sha256_impl::hmac_sha256")
+  "sha256_impl::hmac_sha256 at key 100 bytes, text 3 bytes (against the reversed key)"
+  [compress, hash_100]
+  (hmac_contract 100 3 {{ \(key : [100][8]) (text : [3][8]) ->
+                            split (HMAC`{256, 64, 100, 24, 32} hash hash hash (reverse key) (join text)) : [32][8] }})
+  (w4_unint_z3 hash_unint) hash_unint_name
+  "\\key text -> split (HMAC::HMAC`{256, 64, 100, 24, 32} SHA256Main::hash (x3) (reverse key) (join text))";

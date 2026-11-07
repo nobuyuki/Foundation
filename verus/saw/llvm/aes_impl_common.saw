@@ -1,0 +1,194 @@
+/*
+ * What the AES implementation's SAW scripts share: the bitcode, NSA's
+ * Cryptol, and the contracts, one per shape of Rust function (as
+ * algorithms/AES/rust/Cipher/theorems/saw.py has one per shape, and
+ * SPARK's saw/aes_impl_common.saw one per shape of Ada subprogram).
+ *
+ * Run from verus/saw/llvm/ by verus/scripts/check-saw.sh, which first
+ * compiles the crate with rustc to LLVM bitcode, ../obj/foundation_verus.bc,
+ * and writes ../obj/symbols.saw. Not run by CI: see verus/doc/saw.md.
+ */
+
+enable_experimental;
+
+/*
+ * NSA's Cryptol, imported unmodified. CRYPTOLPATH is the repository's
+ * root (check-saw.sh sets it), where the modules' own imports
+ * (algorithms::AES::Types, shared::algebra::Polynomial::GF2) resolve.
+ */
+import "../../../algorithms/AES/GF28.cry";
+import "../../../algorithms/AES/SBox.cry";
+import "../../../algorithms/AES/Cipher.cry";
+import "../../../algorithms/AES/KeyExpansion.cry";
+import "../../../algorithms/AES/Main.cry";
+
+/*
+ * The crate's library as one LLVM module (rustc with codegen-units=1),
+ * so that every override is of the module being verified. Without
+ * debug info: SAW 1.6 does not read all of it.
+ */
+crate <- llvm_load_module "../obj/foundation_verus.bc";
+
+/*
+ * The Rust names as LLVM symbols. rustc mangles them (the v0 scheme) with
+ * a hash of the crate, which changes with the toolchain and the build, so
+ * check-saw.sh writes ../obj/symbols.saw from the bitcode: for every
+ * function of the crate (not of its ffi module), a binding
+ * rust__<path> = "<symbol>", the path's "::" as "__" and a const generic
+ * argument as "__<value>": aes::aes_impl::expand_key::<128> is
+ * rust__aes__aes_impl__expand_key__128.
+ */
+include "../obj/symbols.saw";
+
+/*
+ * The LLVM types of the Rust ones: u8 is i8; Block ([u8; 16]) is
+ * [16 x i8] in memory.
+ */
+let byte_t = llvm_int 8;
+let word_t = llvm_array 4 byte_t;
+let block_t = llvm_array 16 byte_t;
+
+/*
+ * An AESWord ([u8; 4]) passed or returned by value is one i32 (rustc's
+ * ABI for a 4-byte array), its byte i at the i-th byte in memory: on
+ * x86_64, little-endian, so the i32 is the bytes in reverse, joined.
+ */
+let word_value (a : Term) = {{ join (reverse a) : [32] }};
+let word_of (x : Term) = {{ reverse (split x : [4][8]) }};
+
+/*
+ * fn f(b: u8) -> u8, and fn f(b: u8, c: u8) -> u8.
+ */
+let byte_to_byte_contract (f : Term) = do {
+  b <- llvm_fresh_var "b" byte_t;
+  llvm_execute_func [llvm_term b];
+  llvm_return (llvm_term {{ f b }});
+};
+let byte_byte_to_byte_contract (f : Term) = do {
+  b <- llvm_fresh_var "b" byte_t;
+  c <- llvm_fresh_var "c" byte_t;
+  llvm_execute_func [llvm_term b, llvm_term c];
+  llvm_return (llvm_term {{ f b c }});
+};
+
+/*
+ * fn f(a: AESWord) -> AESWord, and fn f(a: AESWord, b: AESWord) ->
+ * AESWord: i32 in, i32 out. The argument is a fresh i32, cut into its
+ * bytes for the Cryptol (an override's argument must be a variable SAW
+ * can match a caller's value against, not a term of one).
+ */
+let word_to_word_contract (f : Term) = do {
+  x <- llvm_fresh_var "a" (llvm_int 32);
+  let a = word_of x;
+  llvm_execute_func [llvm_term x];
+  llvm_return (llvm_term (word_value {{ f a }}));
+};
+let word_word_to_word_contract (f : Term) = do {
+  x <- llvm_fresh_var "a" (llvm_int 32);
+  y <- llvm_fresh_var "b" (llvm_int 32);
+  let a = word_of x;
+  let b = word_of y;
+  llvm_execute_func [llvm_term x, llvm_term y];
+  llvm_return (llvm_term (word_value {{ f a b }}));
+};
+
+/*
+ * fn f(state: &mut Block): a pointer to the 16 bytes, written in place.
+ * The contract is Cryptol's Block -> Block on what it points to.
+ */
+let block_in_place_contract (f : Term) = do {
+  state <- llvm_fresh_var "state" block_t;
+  p <- llvm_alloc block_t;
+  llvm_points_to p (llvm_term state);
+  llvm_execute_func [p];
+  llvm_points_to p (llvm_term {{ f state }});
+};
+
+/*
+ * fn f(state: &mut Block, key: &Block): add_round_key and the rounds,
+ * Cryptol's Block -> Block -> Block. The key is read-only.
+ */
+let block_key_contract (f : Term) = do {
+  state <- llvm_fresh_var "state" block_t;
+  p <- llvm_alloc block_t;
+  llvm_points_to p (llvm_term state);
+  key <- llvm_fresh_var "key" block_t;
+  kp <- llvm_alloc_readonly block_t;
+  llvm_points_to kp (llvm_term key);
+  llvm_execute_func [p, kp];
+  llvm_points_to p (llvm_term {{ f state key }});
+};
+
+/*
+ * fn encrypt_block::<k>(w: &[Block], state: &mut Block), and the two
+ * decryptions: w is a slice, passed as (pointer, length), of len >= Nr k
+ * + 1 blocks (read-only); the state is written in place. f is the
+ * Cryptol at that size, Cipher`{k}, InvCipher`{k} or InvCipher'`{k} :
+ * [Nr k + 1]Block -> Block -> Block, of the first Nr k + 1 blocks, which
+ * is the Rust's ensures (round_keys). As the Rust template's
+ * cipher_Contract.
+ */
+let cipher_contract (nr : Int) (len : Int) (f : Term) = do {
+  w <- llvm_fresh_var "w" (llvm_array len block_t);
+  wp <- llvm_alloc_readonly (llvm_array len block_t);
+  llvm_points_to wp (llvm_term w);
+  state <- llvm_fresh_var "state" block_t;
+  p <- llvm_alloc block_t;
+  llvm_points_to p (llvm_term state);
+  llvm_execute_func [wp, llvm_term {{ `len : [64] }}, p];
+  llvm_points_to p (llvm_term {{ f (take`{nr + 1} w) state }});
+};
+
+/*
+ * fn expand_key::<k>(key: &[AESWord]) -> [Block; 15]: the result through
+ * a hidden first pointer (sret) to 15 blocks; the key a slice of len >=
+ * Nk k words (read-only). The first Nr k + 1 blocks are f, KeyExpansion
+ * `{k} : [Nk k]AESWord -> [Nr k + 1]Block, of the first Nk k words, and
+ * the rest are zero (the Rust's ensures says the first; its body
+ * starts from zeros).
+ */
+let expand_key_contract (nk : Int) (nr : Int) (len : Int) (f : Term) = do {
+  key <- llvm_fresh_var "key" (llvm_array len word_t);
+  keyp <- llvm_alloc_readonly (llvm_array len word_t);
+  llvm_points_to keyp (llvm_term key);
+  ret <- llvm_alloc (llvm_array 15 block_t);
+  llvm_execute_func [ret, keyp, llvm_term {{ `len : [64] }}];
+  llvm_points_to ret (llvm_term {{ f (take`{nk} key) # (zero : [14 - nr][16][8]) }});
+};
+
+/*
+ * fn encrypt::<k>(key: &[u8], input: Block) -> Block, and decrypt: the
+ * result through sret, the key a slice of k / 8 bytes (read-only), the
+ * input by a pointer to a copy the caller makes (rustc's ABI for a
+ * 16-byte array by value). f is Main.cry's AES`{k}.Encrypt or .Decrypt :
+ * [k] -> [128] -> [128], on the bits: the key's bytes and the block's,
+ * joined, as the Rust's ensures states it.
+ */
+let main_contract (nbytes : Int) (f : Term) = do {
+  key <- llvm_fresh_var "key" (llvm_array nbytes byte_t);
+  keyp <- llvm_alloc_readonly (llvm_array nbytes byte_t);
+  llvm_points_to keyp (llvm_term key);
+  input <- llvm_fresh_var "input" block_t;
+  ip <- llvm_alloc_readonly block_t;
+  llvm_points_to ip (llvm_term input);
+  ret <- llvm_alloc block_t;
+  llvm_execute_func [ret, keyp, llvm_term {{ `nbytes : [64] }}, ip];
+  llvm_points_to ret (llvm_term {{ split (f (join key) (join input)) : [16][8] }});
+};
+
+/*
+ * llvm_verify of one function (its LLVM symbol) against a Cryptol term,
+ * with the overrides given and the proof tactic named, timed, and a line
+ * check-saw.sh records: "RESULT proved <name> = <cryptol> [<tactic>]".
+ */
+let verify_symbol symbol name overrides contract tactic tactic_name cryptol = do {
+  result <- time (llvm_verify crate symbol overrides false contract tactic);
+  print (str_concat (str_concat (str_concat (str_concat (str_concat "RESULT proved " name) " = ") cryptol) " [") (str_concat tactic_name "]"));
+  return result;
+};
+
+/*
+ * A function of aes::aes_impl, by rme as the template's leaf lemmas are.
+ */
+let verify_rme symbol name overrides contract cryptol =
+  verify_symbol symbol name overrides contract rme "rme" cryptol;

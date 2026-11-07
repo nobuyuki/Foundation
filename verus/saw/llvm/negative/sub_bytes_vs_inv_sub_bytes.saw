@@ -1,0 +1,14 @@
+/*
+ * NEGATIVE CONTROL: must FAIL. check-saw.sh fails if it proves.
+ *
+ * sub_bytes against InvSubBytes, with sub_byte's proof as the override
+ * as in aes_impl.saw: the override does not make the proof vacuous.
+ * (SPARK's negative/sub_bytes_vs_inv_sub_bytes.saw.)
+ */
+
+include "../aes_impl_common.saw";
+
+sub_byte <- verify_rme rust__aes__aes_impl__sub_byte "sub_byte" []
+              (byte_to_byte_contract {{ \b -> SBox @ b }}) "\\b -> SBox::SBox @ b";
+verify_rme rust__aes__aes_impl__sub_bytes "sub_bytes" [sub_byte]
+  (block_in_place_contract {{ InvSubBytes }}) "Cipher::InvSubBytes";

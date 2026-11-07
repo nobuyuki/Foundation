@@ -1,0 +1,356 @@
+/*
+ * The Verus crate's HMAC-SHA-256, checked against algorithms/SHA2/SHA256.cry's
+ * HMAC (packaging/Hash.cry's HMAC, which is algorithms/HMAC/Main.cry's HMAC
+ * at B = 64, L = 32 and Hk = Hn = HL = SHA256::hash) through Cryptol's FFI:
+ * the executable hmac::sha256_impl's hmac_sha256, init_key (K0), and init,
+ * update on each chunk of a random chunking, and finalize (hmac_chunked,
+ * in verus/src/ffi/hmac_sha256.rs). The counterpart of the SPARK crate's
+ * spark/cryptol/SPARK/HMAC/SHA256.cry.
+ *
+ * The foreign functions are the C exports of the Verus crate's FFI library
+ * (verus/ffi/), which verus/scripts/check-ffi.sh links here as SHA256.so.
+ * They have no Cryptol body on purpose (see Verus/AES/GF28.cry).
+ *
+ * The SPARK crate also checks its ghost spec's HMAC (at lambda = 256, on
+ * texts that are not whole bytes too) and HMAC_init here (prop_HMAC_texts,
+ * prop_HMAC_keys, prop_HMAC_bits, prop_HMAC_RFC4231, prop_HMAC_init). A
+ * Verus spec function cannot be executed, so those have no counterpart; the
+ * executables are proved equal to them (hmac_sha256 and hmac_chunked =
+ * the spec's HMAC at lambda = 256 on the bits; init_key = HMAC_init), and
+ * so check the spec through the proofs, on whole bytes.
+ * prop_HMAC_SHA256_RFC4231 includes prop_HMAC_RFC4231's check of
+ * SHA256::HMAC itself against RFC 4231: the repository's own HMAC tests
+ * (algorithms/HMAC/tests/) exercise only SHA-3.
+ *
+ * HMAC_init is private in algorithms/HMAC/Main.cry, so no module can call
+ * it. hmacInit below restates it, copied from Main.cry at B = 64, L = 32 and
+ * Hk = SHA256::hash; prop_Init_Key compares init_key with that copy. Every
+ * HMAC property also runs init_key against NSA's own HMAC_init, inside
+ * SHA256::HMAC.
+ *
+ * The functions take the text as [n][8], and are compared with
+ * SHA256::HMAC key (join text).
+ *
+ * The testing is targeted. Lengths are types, so each property names the
+ * lengths it covers: keys of 63, 64 and 65 bytes (just below, at and just
+ * above the block size B = 64, which select HMAC_init's three cases) under
+ * texts at SHA-256's padding boundaries (0, 1, 55, 56, 63, 64, 65, 119,
+ * 120, 127 and 128 bytes; the inner hash is over 64 + n bytes); keys of 0,
+ * 1, 32, 55, 56, 63, 64, 65, 119, 120, 127, 128, 131 and 200 bytes under a
+ * 20-byte text; RFC 4231's cases; and a fixed list of longer key and text
+ * lengths drawn at random once by the SPARK crate (Python's
+ * random.Random(20261019): keys in 65 .. 1000 bytes, texts in 201 .. 4000
+ * bytes). :check draws the contents.
+ */
+module Verus::HMAC::SHA256 where
+
+import algorithms::SHA2::SHA256 as SHA256
+
+/**
+ * hmac::sha256_impl::hmac_sha256, proved equal on the bits to the spec's
+ * HMAC at lambda = 256.
+ */
+foreign verus_hmac_sha256 :
+  {k, n} (fin k, 61 >= width k, fin n, 61 >= width n) =>
+    [k][8] -> [n][8] -> [32][8]
+
+/**
+ * hmac::sha256_impl::init_key (K0), proved equal on the bits to the spec's
+ * HMAC_init.
+ */
+foreign verus_init_key : {k} (fin k, 61 >= width k) => [k][8] -> [64][8]
+
+/**
+ * ffi::hmac_sha256::hmac_chunked: init, update on each chunk, finalize,
+ * proved equal on the bits to the spec's HMAC at lambda = 256 for every
+ * chunking. The [c][64] are the ends of the chunks of the text, in order
+ * and at most n; a last chunk runs to n.
+ */
+foreign verus_hmac_chunked :
+  {k, n, c} (fin k, 61 >= width k, fin n, 61 >= width n, fin c, 64 >= c) =>
+    [k][8] -> [n][8] -> [c][64] -> [32][8]
+
+/**
+ * algorithms/HMAC/Main.cry's HMAC_init (private there), copied, at
+ * B = 64, L = 32 and Hk = SHA256::hash: steps 1-3 of [FIPS-PUB-198-1
+ * Section 4 Table 1].
+ */
+hmacInit : {k} (fin k, 64 >= width (8 * k)) => [k][8] -> [512]
+hmacInit K
+  | k == 64 => join K
+  | k >  64 => SHA256::hash (join K) # (zero : [(64 - 32) * 8])
+  | k <  64 => join K # (zero : [(64 - k) * 8])
+
+/** The number of cut points in a random chunking. */
+type Cuts = 12
+
+/** Random cut points as the ends of a chunking of n bytes: sorted, <= n. */
+chunking : {n} (fin n, 61 >= width n) => [Cuts][64] -> [Cuts][64]
+chunking xs = sort [ x % (`n + 1) | x <- xs ]
+
+// ---------------------------------------------------------------- RFC 4231
+
+/** RFC 4231 test case 1 [RFC 4231 Section 4.2]: key. */
+rfc1Key : [20][8]
+rfc1Key = repeat 0x0b
+/** RFC 4231 test case 1: data. */
+rfc1Data : [8][8]
+rfc1Data = "Hi There"
+/** RFC 4231 test case 1: HMAC-SHA-256. */
+rfc1MAC : [256]
+rfc1MAC = 0xb0344c61d8db38535ca8afceaf0bf12b881dc200c9833da726e9376c2e32cff7
+
+/** RFC 4231 test case 2 [RFC 4231 Section 4.3]: key. */
+rfc2Key : [4][8]
+rfc2Key = "Jefe"
+/** RFC 4231 test case 2: data. */
+rfc2Data : [28][8]
+rfc2Data = "what do ya want for nothing?"
+/** RFC 4231 test case 2: HMAC-SHA-256. */
+rfc2MAC : [256]
+rfc2MAC = 0x5bdcc146bf60754e6a042426089575c75a003f089d2739839dec58b964ec3843
+
+/** RFC 4231 test case 3 [RFC 4231 Section 4.4]: key. */
+rfc3Key : [20][8]
+rfc3Key = repeat 0xaa
+/** RFC 4231 test case 3: data. */
+rfc3Data : [50][8]
+rfc3Data = repeat 0xdd
+/** RFC 4231 test case 3: HMAC-SHA-256. */
+rfc3MAC : [256]
+rfc3MAC = 0x773ea91e36800e46854db8ebd09181a72959098b3ef8c122d9635514ced565fe
+
+/** RFC 4231 test case 4 [RFC 4231 Section 4.5]: key, 0x01 .. 0x19. */
+rfc4Key : [25][8]
+rfc4Key = [1 .. 25]
+/** RFC 4231 test case 4: data. */
+rfc4Data : [50][8]
+rfc4Data = repeat 0xcd
+/** RFC 4231 test case 4: HMAC-SHA-256. */
+rfc4MAC : [256]
+rfc4MAC = 0x82558a389a443c0ea4cc819899f2083a85f0faa3e578f8077a2e3ff46729665b
+
+/** RFC 4231 test case 5 [RFC 4231 Section 4.6]: key. */
+rfc5Key : [20][8]
+rfc5Key = repeat 0x0c
+/** RFC 4231 test case 5: data. */
+rfc5Data : [20][8]
+rfc5Data = "Test With Truncation"
+/** RFC 4231 test case 5: HMAC-SHA-256, truncated to 128 bits. */
+rfc5MAC : [128]
+rfc5MAC = 0xa3b6167473100ee06e0c796c2955552b
+
+/** RFC 4231 test cases 6 and 7 [RFC 4231 Sections 4.7, 4.8]: key. */
+rfc6Key : [131][8]
+rfc6Key = repeat 0xaa
+/** RFC 4231 test case 6: data. */
+rfc6Data : [54][8]
+rfc6Data = "Test Using Larger Than Block-Size Key - Hash Key First"
+/** RFC 4231 test case 6: HMAC-SHA-256. */
+rfc6MAC : [256]
+rfc6MAC = 0x60e431591ee0b67f0d8a26aacbf5b77f8e0bc6213728c5140546040f0ee37f54
+
+/** RFC 4231 test case 7: data. */
+rfc7Data : [152][8]
+rfc7Data = "This is a test using a larger than block-size key and a larger than block-size data. The key needs to be hashed before being used by the HMAC algorithm."
+/** RFC 4231 test case 7: HMAC-SHA-256. */
+rfc7MAC : [256]
+rfc7MAC = 0x9b09ffa71b942fcb27635fbcd5b0e944bfdc63644f0713938a7f51535c3a35e2
+
+// ---------------------------------------------------------------- the implementation
+
+/** The executable hmac_sha256 on a k-byte key and an n-byte text. */
+execHMAC :
+  {k, n} (fin k, 61 >= width k, fin n, 61 >= width n) => [k][8] -> [n][8] -> [256]
+execHMAC K T = join (verus_hmac_sha256 K T)
+
+/** The executable hmac_sha256 is SHA256::HMAC on a k-byte key and an n-byte text. */
+implAt :
+  {k, n} (fin k, 61 >= width k, fin n, 61 >= width n, 64 >= width (512 + 8 * n)) =>
+    [k][8] -> [n][8] -> Bit
+implAt K T = execHMAC K T == SHA256::HMAC K (join T)
+
+/**
+ * The executable hmac_sha256 is SHA256::HMAC under keys of 63, 64 and 65
+ * bytes at the boundary text lengths.
+ */
+prop_HMAC_SHA256_texts : [3][65][8] -> [128][8] -> Bit
+property prop_HMAC_SHA256_texts ks ts =
+     implAt (take`{63} (ks @ 0)) (take`{0} ts)
+  /\ implAt (take`{63} (ks @ 0)) (take`{1} ts)
+  /\ implAt (take`{63} (ks @ 0)) (take`{55} ts)
+  /\ implAt (take`{63} (ks @ 0)) (take`{56} ts)
+  /\ implAt (take`{63} (ks @ 0)) (take`{63} ts)
+  /\ implAt (take`{63} (ks @ 0)) (take`{64} ts)
+  /\ implAt (take`{63} (ks @ 0)) (take`{65} ts)
+  /\ implAt (take`{63} (ks @ 0)) (take`{119} ts)
+  /\ implAt (take`{63} (ks @ 0)) (take`{120} ts)
+  /\ implAt (take`{63} (ks @ 0)) (take`{127} ts)
+  /\ implAt (take`{63} (ks @ 0)) (take`{128} ts)
+  /\ implAt (take`{64} (ks @ 1)) (take`{0} ts)
+  /\ implAt (take`{64} (ks @ 1)) (take`{1} ts)
+  /\ implAt (take`{64} (ks @ 1)) (take`{55} ts)
+  /\ implAt (take`{64} (ks @ 1)) (take`{56} ts)
+  /\ implAt (take`{64} (ks @ 1)) (take`{63} ts)
+  /\ implAt (take`{64} (ks @ 1)) (take`{64} ts)
+  /\ implAt (take`{64} (ks @ 1)) (take`{65} ts)
+  /\ implAt (take`{64} (ks @ 1)) (take`{119} ts)
+  /\ implAt (take`{64} (ks @ 1)) (take`{120} ts)
+  /\ implAt (take`{64} (ks @ 1)) (take`{127} ts)
+  /\ implAt (take`{64} (ks @ 1)) (take`{128} ts)
+  /\ implAt (take`{65} (ks @ 2)) (take`{0} ts)
+  /\ implAt (take`{65} (ks @ 2)) (take`{1} ts)
+  /\ implAt (take`{65} (ks @ 2)) (take`{55} ts)
+  /\ implAt (take`{65} (ks @ 2)) (take`{56} ts)
+  /\ implAt (take`{65} (ks @ 2)) (take`{63} ts)
+  /\ implAt (take`{65} (ks @ 2)) (take`{64} ts)
+  /\ implAt (take`{65} (ks @ 2)) (take`{65} ts)
+  /\ implAt (take`{65} (ks @ 2)) (take`{119} ts)
+  /\ implAt (take`{65} (ks @ 2)) (take`{120} ts)
+  /\ implAt (take`{65} (ks @ 2)) (take`{127} ts)
+  /\ implAt (take`{65} (ks @ 2)) (take`{128} ts)
+
+/** The executable hmac_sha256 at the boundary key lengths, 20-byte text. */
+prop_HMAC_SHA256_keys : [200][8] -> [20][8] -> Bit
+property prop_HMAC_SHA256_keys ks t =
+     implAt (take`{0} ks) t
+  /\ implAt (take`{1} ks) t
+  /\ implAt (take`{32} ks) t
+  /\ implAt (take`{55} ks) t
+  /\ implAt (take`{56} ks) t
+  /\ implAt (take`{63} ks) t
+  /\ implAt (take`{64} ks) t
+  /\ implAt (take`{65} ks) t
+  /\ implAt (take`{119} ks) t
+  /\ implAt (take`{120} ks) t
+  /\ implAt (take`{127} ks) t
+  /\ implAt (take`{128} ks) t
+  /\ implAt (take`{131} ks) t
+  /\ implAt (take`{200} ks) t
+
+/** The executable hmac_sha256 at the fixed longer key and text lengths. */
+prop_HMAC_SHA256_long : [1000][8] -> [4000][8] -> Bit
+property prop_HMAC_SHA256_long ks ts =
+     implAt (take`{668} ks) (take`{1522} ts)
+  /\ implAt (take`{805} ks) (take`{693}  ts)
+  /\ implAt (take`{282} ks) (take`{2126} ts)
+  /\ implAt (take`{617} ks) (take`{1399} ts)
+  /\ implAt (take`{338} ks) (take`{3135} ts)
+  /\ implAt (take`{93}  ks) (take`{1629} ts)
+
+/**
+ * The executable hmac_sha256 gives RFC 4231's HMAC-SHA-256 for test cases
+ * 1-7, case 5 truncated to 128 bits, and so does SHA256::HMAC (NSA's
+ * Cryptol), which the SPARK crate checks in prop_HMAC_RFC4231 with its
+ * ghost spec's HMAC.
+ */
+property prop_HMAC_SHA256_RFC4231 =
+     SHA256::HMAC rfc1Key (join rfc1Data) == rfc1MAC
+  /\ SHA256::HMAC rfc2Key (join rfc2Data) == rfc2MAC
+  /\ SHA256::HMAC rfc3Key (join rfc3Data) == rfc3MAC
+  /\ SHA256::HMAC rfc4Key (join rfc4Data) == rfc4MAC
+  /\ take`{128} (SHA256::HMAC rfc5Key (join rfc5Data)) == rfc5MAC
+  /\ SHA256::HMAC rfc6Key (join rfc6Data) == rfc6MAC
+  /\ SHA256::HMAC rfc6Key (join rfc7Data) == rfc7MAC
+  /\ execHMAC rfc1Key rfc1Data == rfc1MAC
+  /\ execHMAC rfc2Key rfc2Data == rfc2MAC
+  /\ execHMAC rfc3Key rfc3Data == rfc3MAC
+  /\ execHMAC rfc4Key rfc4Data == rfc4MAC
+  /\ take`{128} (execHMAC rfc5Key rfc5Data) == rfc5MAC
+  /\ execHMAC rfc6Key rfc6Data == rfc6MAC
+  /\ execHMAC rfc6Key rfc7Data == rfc7MAC
+
+/** The executable init_key is Main.cry's HMAC_init (hmacInit) on a k-byte key. */
+initKeyAt : {k} (fin k, 61 >= width k) => [k][8] -> Bit
+initKeyAt K = join (verus_init_key K) == hmacInit K
+
+/** The executable init_key is Main.cry's HMAC_init at the boundary key lengths. */
+prop_Init_Key : [200][8] -> Bit
+property prop_Init_Key ks =
+     initKeyAt (take`{0} ks)
+  /\ initKeyAt (take`{1} ks)
+  /\ initKeyAt (take`{32} ks)
+  /\ initKeyAt (take`{55} ks)
+  /\ initKeyAt (take`{56} ks)
+  /\ initKeyAt (take`{63} ks)
+  /\ initKeyAt (take`{64} ks)
+  /\ initKeyAt (take`{65} ks)
+  /\ initKeyAt (take`{119} ks)
+  /\ initKeyAt (take`{120} ks)
+  /\ initKeyAt (take`{127} ks)
+  /\ initKeyAt (take`{128} ks)
+  /\ initKeyAt (take`{131} ks)
+  /\ initKeyAt (take`{200} ks)
+
+/**
+ * hmac_chunked (init, update on each chunk, finalize), with the text cut at
+ * random, is SHA256::HMAC.
+ */
+chunkedAt :
+  {k, n} (fin k, 61 >= width k, fin n, 61 >= width n, 64 >= width (512 + 8 * n)) =>
+    [k][8] -> [n][8] -> [Cuts][64] -> Bit
+chunkedAt K T xs =
+  join (verus_hmac_chunked K T (chunking`{n} xs)) == SHA256::HMAC K (join T)
+
+/**
+ * The executable incremental HMAC (Init, Update on each chunk, Final) is
+ * SHA256::HMAC under keys of 63, 64 and 65 bytes at the boundary text
+ * lengths, each text cut at random by 12 cut points (13 chunks, any of
+ * them possibly empty).
+ */
+prop_HMAC_Chunked : [3][65][8] -> [128][8] -> [33][Cuts][64] -> Bit
+property prop_HMAC_Chunked ks ts xss =
+     chunkedAt (take`{63} (ks @ 0)) (take`{0} ts) (xss @ 0)
+  /\ chunkedAt (take`{63} (ks @ 0)) (take`{1} ts) (xss @ 1)
+  /\ chunkedAt (take`{63} (ks @ 0)) (take`{55} ts) (xss @ 2)
+  /\ chunkedAt (take`{63} (ks @ 0)) (take`{56} ts) (xss @ 3)
+  /\ chunkedAt (take`{63} (ks @ 0)) (take`{63} ts) (xss @ 4)
+  /\ chunkedAt (take`{63} (ks @ 0)) (take`{64} ts) (xss @ 5)
+  /\ chunkedAt (take`{63} (ks @ 0)) (take`{65} ts) (xss @ 6)
+  /\ chunkedAt (take`{63} (ks @ 0)) (take`{119} ts) (xss @ 7)
+  /\ chunkedAt (take`{63} (ks @ 0)) (take`{120} ts) (xss @ 8)
+  /\ chunkedAt (take`{63} (ks @ 0)) (take`{127} ts) (xss @ 9)
+  /\ chunkedAt (take`{63} (ks @ 0)) (take`{128} ts) (xss @ 10)
+  /\ chunkedAt (take`{64} (ks @ 1)) (take`{0} ts) (xss @ 11)
+  /\ chunkedAt (take`{64} (ks @ 1)) (take`{1} ts) (xss @ 12)
+  /\ chunkedAt (take`{64} (ks @ 1)) (take`{55} ts) (xss @ 13)
+  /\ chunkedAt (take`{64} (ks @ 1)) (take`{56} ts) (xss @ 14)
+  /\ chunkedAt (take`{64} (ks @ 1)) (take`{63} ts) (xss @ 15)
+  /\ chunkedAt (take`{64} (ks @ 1)) (take`{64} ts) (xss @ 16)
+  /\ chunkedAt (take`{64} (ks @ 1)) (take`{65} ts) (xss @ 17)
+  /\ chunkedAt (take`{64} (ks @ 1)) (take`{119} ts) (xss @ 18)
+  /\ chunkedAt (take`{64} (ks @ 1)) (take`{120} ts) (xss @ 19)
+  /\ chunkedAt (take`{64} (ks @ 1)) (take`{127} ts) (xss @ 20)
+  /\ chunkedAt (take`{64} (ks @ 1)) (take`{128} ts) (xss @ 21)
+  /\ chunkedAt (take`{65} (ks @ 2)) (take`{0} ts) (xss @ 22)
+  /\ chunkedAt (take`{65} (ks @ 2)) (take`{1} ts) (xss @ 23)
+  /\ chunkedAt (take`{65} (ks @ 2)) (take`{55} ts) (xss @ 24)
+  /\ chunkedAt (take`{65} (ks @ 2)) (take`{56} ts) (xss @ 25)
+  /\ chunkedAt (take`{65} (ks @ 2)) (take`{63} ts) (xss @ 26)
+  /\ chunkedAt (take`{65} (ks @ 2)) (take`{64} ts) (xss @ 27)
+  /\ chunkedAt (take`{65} (ks @ 2)) (take`{65} ts) (xss @ 28)
+  /\ chunkedAt (take`{65} (ks @ 2)) (take`{119} ts) (xss @ 29)
+  /\ chunkedAt (take`{65} (ks @ 2)) (take`{120} ts) (xss @ 30)
+  /\ chunkedAt (take`{65} (ks @ 2)) (take`{127} ts) (xss @ 31)
+  /\ chunkedAt (take`{65} (ks @ 2)) (take`{128} ts) (xss @ 32)
+
+/** The incremental HMAC at the fixed longer lengths, cut at random. */
+prop_HMAC_Chunked_long : [1000][8] -> [4000][8] -> [6][Cuts][64] -> Bit
+property prop_HMAC_Chunked_long ks ts xss =
+     chunkedAt (take`{668} ks) (take`{1522} ts) (xss @ 0)
+  /\ chunkedAt (take`{805} ks) (take`{693}  ts) (xss @ 1)
+  /\ chunkedAt (take`{282} ks) (take`{2126} ts) (xss @ 2)
+  /\ chunkedAt (take`{617} ks) (take`{1399} ts) (xss @ 3)
+  /\ chunkedAt (take`{338} ks) (take`{3135} ts) (xss @ 4)
+  /\ chunkedAt (take`{93}  ks) (take`{1629} ts) (xss @ 5)
+
+/** The incremental HMAC gives RFC 4231's HMAC-SHA-256, cut at random. */
+prop_HMAC_Chunked_RFC4231 : [7][Cuts][64] -> Bit
+property prop_HMAC_Chunked_RFC4231 xss =
+     join (verus_hmac_chunked rfc1Key rfc1Data (chunking`{8} (xss @ 0))) == rfc1MAC
+  /\ join (verus_hmac_chunked rfc2Key rfc2Data (chunking`{28} (xss @ 1))) == rfc2MAC
+  /\ join (verus_hmac_chunked rfc3Key rfc3Data (chunking`{50} (xss @ 2))) == rfc3MAC
+  /\ join (verus_hmac_chunked rfc4Key rfc4Data (chunking`{50} (xss @ 3))) == rfc4MAC
+  /\ take`{128} (join (verus_hmac_chunked rfc5Key rfc5Data (chunking`{20} (xss @ 4)))) == rfc5MAC
+  /\ join (verus_hmac_chunked rfc6Key rfc6Data (chunking`{54} (xss @ 5))) == rfc6MAC
+  /\ join (verus_hmac_chunked rfc6Key rfc7Data (chunking`{152} (xss @ 6))) == rfc7MAC

@@ -1,0 +1,45 @@
+# The Rust side of the AES size and performance comparison:
+# NSA's Rust Cipher and KeyExpansion crates (algorithms/AES/rust/), used
+# as they are, behind one non-inlined wrapper per operation (src/lib.rs),
+# and timed by src/main.rs. scripts/perf-aes.sh builds and runs it with the
+# profiles below; doc/performance.md gives the numbers. The SPARK crate's
+# spark/perf/rust/, unchanged but for its comments and the [workspace]
+# table.
+[package]
+name = "aes_perf"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+name = "aes_perf"
+path = "src/lib.rs"
+
+[[bin]]
+name = "aes_perf"
+path = "src/main.rs"
+
+[dependencies]
+Cipher = { path = "../../../algorithms/AES/rust/Cipher" }
+KeyExpansion = { path = "../../../algorithms/AES/rust/KeyExpansion" }
+
+# Its own workspace, apart from the crate's and from perf/'s.
+[workspace]
+
+# The comparison's profiles: release, with the opt-level of the Verus build
+# it is set against, fat LTO and one codegen unit (whole-program
+# optimization, as perf/Cargo.toml's), no debug info. Everything
+# else is the release default: overflow checks off, debug assertions off,
+# panic = "unwind". Slice bounds checks stay: Rust has no switch to remove
+# them.
+[profile.perf-o2]
+inherits = "release"
+opt-level = 2
+lto = "fat"
+codegen-units = 1
+
+[profile.perf-o3]
+inherits = "release"
+opt-level = 3
+lto = "fat"
+codegen-units = 1

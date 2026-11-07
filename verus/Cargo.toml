@@ -1,0 +1,25 @@
+[package]
+name = "foundation_verus"
+description = "Rust implementations proved with Verus against Foundation Cryptol specs"
+version = "0.1.0-dev"
+edition = "2024"
+license = "Apache-2.0"
+publish = false
+
+[dependencies]
+vstd = { version = "=0.0.0-2026-10-11-0230", default-features = false }
+
+[package.metadata.verus]
+verify = true
+
+[lints.rust]
+# Verus enables this cfg while verifying; used to drop ghost-only `use`s from normal builds.
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(verus_only)'] }
+
+# Standalone workspace (not part of shared/rust).
+[workspace]
+
+# The Verus release used to verify this crate. Keep vstd above and
+# rust-toolchain.toml in step with it; update all three together.
+[workspace.metadata.verus]
+version = "0.2026.10.16.bf5bb51"

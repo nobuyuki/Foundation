@@ -1,0 +1,211 @@
+# mutants.txt -- the mutants of the executable Verus code, read by
+# scripts/mutation.py. The counterpart of the SPARK crate's
+# spark/mutation/mutants.txt (github.com/manthonyaiello/Foundation, tag
+# spark-v1.0): the same 84 faults, under the same ids, each written on the
+# Verus source that does what the SPARK line does.
+#
+# Each mutant is one small change to one line of one source, in the
+# executable code (never a contract, an assertion, a proof block or a spec
+# function), with one kind of exception, the F*b mutants below: an operator,
+# a constant, an off-by-one bound, a loop bound, an index, a dropped
+# statement or a swapped call. The script copies the checkout to a scratch
+# tree, applies one mutant at a time there, and never writes a mutant into
+# this checkout.
+#
+# Mutant lines:
+#
+#     id | file | line | from | to | ffi | prove | what
+#
+# id     A (AES.Impl: aes/aes_impl.rs), M (AES.Impl.Main:
+#        aes/aes_impl/main.rs), S (SHA2.SHA256_Stream: sha2/sha256_stream.rs),
+#        H (HMAC.SHA256_Impl: hmac/sha256_impl.rs), F (SHA2.Functions:
+#        sha2/functions.rs), and the SPARK crate's number.
+# file   The source, relative to verus/.
+# line   The line the change is on, in the source at the commit that adds
+#        this list; `mutation.py check` fails if from is not on it, once.
+# from   The text replaced, which must occur exactly once on that line.
+# to     Its replacement (`{}`, an empty block, for a dropped statement:
+#        the SPARK list's `null;`).
+# ffi    The FFI properties run for the mutant: group names (below) and
+#        property names, space-separated, in the order they are run. A
+#        survivor of these is then run against every property
+#        (`mutation.py ffi --full`).
+# prove  The modules Verus verifies for the mutant (`cargo verus focus --
+#        --verify-only-module M ...`), or a group: the mutated module, the
+#        counterpart of the SPARK list's units for gnatprove -u.
+# what   What the change is, in words.
+#
+# A mutant of more than one line has one line per change, under the same id,
+# each with the same ffi, prove and what; they are applied together.
+#
+# Group lines:  group NAME = MEMBER ...   (a member may be another group,
+# by its name).
+#
+# How the list differs from the SPARK crate's:
+#
+# * F01 to F07 come in two kinds. In the SPARK crate SHA2.Functions is one
+#   set of expression functions, which the spec layer and the implementation
+#   share, so a mutant there changes both, and gnatprove proves the
+#   implementation against the mutated spec. Here the spec functions and
+#   their executable twins (the `exec` submodule) are separate code:
+#     F01a ... F07a  change the executable twin alone (the rule above);
+#     F01b ... F07b  make the same change to the spec function and to its
+#                    twin, two lines: the SPARK mutant's effect (spec and
+#                    implementation agree, and both are wrong).
+# * S27, S28 and S29 are not here (their ids are unused): each slices an
+#   array from 0 instead of from its 'First, a fault Rust cannot have (every
+#   slice starts at 0).
+# * A29 cannot drop the initialization (Rust requires it): it changes the
+#   initial value, which is equally dead (every word is written before it
+#   is read).
+# * Where the SPARK code has one statement per byte and this code a loop
+#   (Final's length bytes, S21 to S25), the change is made to one iteration
+#   of the loop by a condition on its index, so that it is the same fault.
+# * The FFI groups name the properties that reach the mutated function,
+#   which include this crate's exports of the leaf functions (prop_xTimes,
+#   prop_SBox, prop_SubBytes, ...): doc/ffi.md.
+
+# ---------------------------------------------------------------- FFI groups
+
+# AES.Impl, through each export that reaches it (src/ffi/aes_*.rs).
+group aes_xtimes = prop_xTimes
+group aes_gf = prop_Impl_Dot
+group aes_sbox = prop_SBox prop_SubBytes prop_SubWord prop_Round
+group aes_inv_sbox = prop_InvSBox prop_InvSubBytes prop_InvRound prop_InvRound'
+group aes_mix = prop_MixColumnsStep prop_MixColumns prop_Round
+group aes_inv_mix = prop_InvMixColumnsStep prop_InvMixColumns prop_InvRound prop_InvRound'
+group aes_add = prop_AddRoundKey prop_Round prop_InvRound prop_InvRound'
+group aes_key = prop_Expand_Key128 prop_Expand_Key192 prop_Expand_Key256 prop_Expand_Key_FIPS
+group aes_block = prop_Encrypt_Block128 prop_Encrypt_Block192 prop_Encrypt_Block256 prop_Decrypt_Block128 prop_Decrypt_Block192 prop_Decrypt_Block256 prop_Decrypt_Block_Prime128 prop_Decrypt_Block_Prime192 prop_Decrypt_Block_Prime256 prop_Block_CipherExample
+# AES.Impl.Main (and through it all of AES.Impl's cipher).
+group aes_main = prop_Impl_Encrypt128 prop_Impl_Encrypt192 prop_Impl_Encrypt256 prop_Impl_Decrypt128 prop_Impl_Decrypt192 prop_Impl_Decrypt256 prop_Impl_AESExamples prop_Impl_FIPS197_C prop_Exec_Encrypt128 prop_Exec_Encrypt192 prop_Exec_Encrypt256 prop_Exec_Decrypt128 prop_Exec_Decrypt192 prop_Exec_Decrypt256 prop_Exec_AESExamples prop_Exec_FIPS197_C
+
+# HMAC.SHA256_Impl (src/ffi/hmac_sha256.rs).
+group hmac_impl = prop_HMAC_SHA256_texts prop_HMAC_SHA256_keys prop_HMAC_SHA256_long prop_HMAC_SHA256_RFC4231 prop_HMAC_Chunked prop_HMAC_Chunked_long prop_HMAC_Chunked_RFC4231 prop_Init_Key
+# SHA2.SHA256_Stream (src/ffi/sha2_sha256.rs, sha2_preprocessing.rs), and
+# HMAC.SHA256_Impl, which hashes through it.
+group sha_stream = prop_Compress prop_Load_Block prop_Stream_Hash prop_Stream_Hash_long prop_Stream_Hash_FIPS prop_Stream_Chunked prop_Stream_Chunked_long prop_Stream_Chunked_FIPS hmac_impl
+# SHA2.Functions: its own exports, and everything that computes with it.
+# (The SPARK group also has the spec layer's properties, prop_step to
+# prop_HMAC_RFC4231, which this crate cannot export: doc/ffi.md.)
+group sha_functions = prop_Ch prop_Maj prop_SIGMA_256_0 prop_SIGMA_256_1 prop_sigma_256_0 prop_sigma_256_1 prop_K_256 sha_stream
+
+# ---------------------------------------------------------------- proof groups
+
+# Every module of SHA-2 and HMAC with something to verify, spec and lemmas
+# included: what a change to a spec function of SHA2.Functions can break
+# (the SPARK list's sha_units).
+group sha_modules = sha2::notation sha2::notation::exec sha2::functions sha2::functions::exec sha2::preprocessing sha2::preprocessing::exec sha2::main sha2::sha256 sha2::sha256_bytes sha2::sha256_blocks sha2::sha256_stream hmac::main hmac::sha256 hmac::sha256_impl hmac::sha256_impl::exec ffi::hmac_sha256
+
+# ---------------------------------------------------------------- AES.Impl
+
+A01 | src/aes/aes_impl.rs | 123 | 0x1bu8 | 0x1du8 | aes_xtimes aes_mix aes_inv_mix aes_block aes_main | aes::aes_impl | x_times: the reduction constant 0x1b changed to 0x1d
+A02 | src/aes/aes_impl.rs | 123 | b >= 0x80 { | b >= 0x40 { | aes_xtimes aes_mix aes_inv_mix aes_block aes_main | aes::aes_impl | x_times: the reduction taken on bit 6
+A03 | src/aes/aes_impl.rs | 275 | [a[1], a[2], a[3], a[0]] | [a[1], a[2], a[0], a[3]] | prop_RotWord aes_key aes_main | aes::aes_impl | rot_word: two bytes swapped
+A04 | src/aes/aes_impl.rs | 309 | 9 => 0x1b | 9 => 0x1d | prop_Rcon aes_key aes_main | aes::aes_impl | rcon: Rcon(9), read by AES-128 only, changed
+A05 | src/aes/aes_impl.rs | 310 | _ => 0x36 | _ => 0x37 | prop_Rcon aes_key aes_main | aes::aes_impl | rcon: Rcon(10), read by AES-128's last word only, changed
+A06 | src/aes/aes_impl.rs | 138 | while n < 8 | while n < 7 | aes_gf | aes::aes_impl | dot: the product loop one bit short
+A07 | src/aes/aes_impl.rs | 170 | t ^ 0x11b | t ^ 0x11d | aes_gf | aes::aes_impl | dot: the modulus 0x11b changed to 0x11d
+A08 | src/aes/aes_impl.rs | 159 | while n < 15 | while n < 14 | aes_gf | aes::aes_impl | dot: the reduction loop one bit short
+A09 | src/aes/aes_impl.rs | 188 | 0x63u8, 0x7c | 0x62u8, 0x7c | aes_sbox aes_key aes_block aes_main | aes::aes_impl | S_BOX: entry 0x00 changed
+A10 | src/aes/aes_impl.rs | 203 | 0x54, 0xbb, 0x16, | 0x54, 0xbb, 0x17, | aes_sbox aes_key aes_block aes_main | aes::aes_impl | S_BOX: entry 0xff changed
+A11 | src/aes/aes_impl.rs | 218 | 0x52u8, 0x09 | 0x53u8, 0x09 | aes_inv_sbox aes_block aes_main | aes::aes_impl | INV_S_BOX: entry 0x00 changed
+A12 | src/aes/aes_impl.rs | 233 | 0x0c, 0x7d, | 0x0c, 0x7c, | aes_inv_sbox aes_block aes_main | aes::aes_impl | INV_S_BOX: entry 0xff changed
+A13 | src/aes/aes_impl.rs | 247 | S_BOX[b as usize] | S_BOX[(b ^ 1) as usize] | aes_sbox aes_key aes_block aes_main | aes::aes_impl | sub_byte: the table indexed by b ^ 1
+A14 | src/aes/aes_impl.rs | 256 | INV_S_BOX[b as usize] | INV_S_BOX[b.wrapping_add(1) as usize] | aes_inv_sbox aes_block aes_main | aes::aes_impl | inv_sub_byte: the table indexed by b + 1 (mod 256, as the SPARK byte's +)
+A15 | src/aes/aes_impl.rs | 265 | sub_byte(a[3])] | sub_byte(a[2])] | prop_SubWord aes_key aes_main | aes::aes_impl | sub_word: byte 3 taken from byte 2
+A16 | src/aes/aes_impl.rs | 429 | state[i] = sub_byte(state[i]); | state[i] = inv_sub_byte(state[i]); | prop_SubBytes prop_Round aes_block aes_main | aes::aes_impl | sub_bytes: the inverse S-box called
+A17 | src/aes/aes_impl.rs | 462 | s[0], s[5], | s[0], s[1], | prop_ShiftRows prop_Round aes_block aes_main | aes::aes_impl | shift_rows: an index changed
+A18 | src/aes/aes_impl.rs | 476 | s[6], s[3], | s[6], s[7], | prop_InvShiftRows prop_InvRound prop_InvRound' aes_block aes_main | aes::aes_impl | inv_shift_rows: an index changed
+A19 | src/aes/aes_impl.rs | 498 | s[2] ^ x[3], | s[2] ^ s[3], | aes_mix aes_block aes_main | aes::aes_impl | mix_column: 0x02 * s3 read as s3
+A20 | src/aes/aes_impl.rs | 495 | x[0] ^ (s[1] ^ x[1]) | (s[1] ^ x[1]) ^ x[0] | aes_mix aes_block aes_main | aes::aes_impl | mix_column: operands of a xor swapped (equivalent)
+A21 | src/aes/aes_impl.rs | 529 | (d ^ d8) | (d2 ^ d8) | aes_inv_mix aes_block aes_main | aes::aes_impl | inv_mix_byte: 0x09 * d computed as 0x0a * d
+A22 | src/aes/aes_impl.rs | 553 | inv_mix_byte(s[3], s[0], s[1], s[2]) | inv_mix_byte(s[3], s[1], s[0], s[2]) | aes_inv_mix aes_block aes_main | aes::aes_impl | inv_mix_column: the last row's rotation wrong
+A23 | src/aes/aes_impl.rs | 627 | state[i] ^ key[i] | state[i] ^ key[15 - i] | aes_add aes_block aes_main | aes::aes_impl | add_round_key: the key's bytes reversed
+A24 | src/aes/aes_impl.rs | 639 | shift_rows(state); | {} | prop_Round aes_block aes_main | aes::aes_impl | round: ShiftRows dropped
+A25 | src/aes/aes_impl.rs | 689 | while r < nr | while r < nr - 1 | aes_block aes_main | aes::aes_impl | encrypt_block: one round short
+A26 | src/aes/aes_impl.rs | 706 | add_round_key(state, &w[nr]); | add_round_key(state, &w[nr - 1]); | aes_block aes_main | aes::aes_impl | encrypt_block: the last round key off by one
+A27 | src/aes/aes_impl.rs | 742 | inv_round(state, &w[nr - j]); | inv_round(state, &w[nr - j - 1]); | aes_block aes_main | aes::aes_impl | decrypt_block: the round keys off by one
+A28 | src/aes/aes_impl.rs | 789 | add_round_key(state, &w[0]); | add_round_key(state, &w[1]); | aes_block | aes::aes_impl | decrypt_block_prime: the last round key w[1] for w[0]
+A29 | src/aes/aes_impl.rs | 336 | [[0u8; 4]; 60] | [[1u8; 4]; 60] | aes_key aes_main | aes::aes_impl | expand_key: the schedule initialized to ones, not zeros (equivalent: every word is written before it is read; the SPARK mutant drops the initialization, which Rust does not allow)
+A30 | src/aes/aes_impl.rs | 338 | while i < 4 * (nr + 1) | while i < 4 * nr | aes_key aes_main | aes::aes_impl | expand_key: the last round key's words never computed
+A31 | src/aes/aes_impl.rs | 356 | if i % nk == 0 { | if i % nk == 1 { | aes_key aes_main | aes::aes_impl | expand_key: the RotWord step on the wrong word
+A32 | src/aes/aes_impl.rs | 371 | && nk > 6 | && nk > 4 | aes_key aes_main | aes::aes_impl | expand_key: the extra SubWord step also for AES-192
+A33 | src/aes/aes_impl.rs | 371 | && nk > 6 | && nk > 7 | aes_key aes_main | aes::aes_impl | expand_key: nk > 6 as nk > 7 (equivalent: nk is 4, 6 or 8)
+A34 | src/aes/aes_impl.rs | 400 | a[0], a[1], a[2], a[3], b[0], b[1], b[2], b[3], | a[0], b[0], c[0], d[0], a[1], b[1], c[1], d[1], | aes_key aes_main | aes::aes_impl | expand_key: the round key's bytes transposed (its first half, the line the SPARK index expression is on here)
+
+# ---------------------------------------------------------------- AES.Impl.Main
+
+M01 | src/aes/aes_impl/main.rs | 75 | key[4 * j + 1] | key[4 * j + 2] | aes_main | aes::aes_impl::main | key_words_of: an index changed
+M02 | src/aes/aes_impl/main.rs | 65 | while j < nk | while j < nk - 1 | aes_main | aes::aes_impl::main | key_words_of: the last key word never read
+M03 | src/aes/aes_impl/main.rs | 94 | encrypt_block::<k>(&w, &mut state); | decrypt_block::<k>(&w, &mut state); | aes_main | aes::aes_impl::main | encrypt: the wrong cipher called
+M04 | src/aes/aes_impl/main.rs | 120 | decrypt_block::<k>(&w, &mut state); | super::decrypt_block_prime::<k>(&w, &mut state); | aes_main | aes::aes_impl::main | decrypt: InvCipher' for InvCipher (equivalent: Cipher.cry proves them equal)
+M05 | src/aes/aes_impl/main.rs | 118 | expand_key::<k>(&ws); | expand_key::<128>(&ws); | aes_main | aes::aes_impl::main | decrypt: the key schedule always AES-128's
+
+# ---------------------------------------------------------------- SHA2.SHA256_Stream
+
+S01 | src/sha2/sha256_stream.rs | 75 | sched[t - 7] | sched[t - 6] | sha_stream | sha2::sha256_stream | compress: the schedule reads W(t-6) for W(t-7)
+S02 | src/sha2/sha256_stream.rs | 77 | sched[t - 16] | sched[t - 15] | sha_stream | sha2::sha256_stream | compress: the schedule reads W(t-15) for W(t-16)
+S03 | src/sha2/sha256_stream.rs | 66 | while t < 64 | while t < 63 | sha_stream | sha2::sha256_stream | compress: the schedule's last word never computed
+S04 | src/sha2/sha256_stream.rs | 97 | K_256[t] | K_256[63 - t] | sha_stream | sha2::sha256_stream | compress: the round constants in reverse
+S05 | src/sha2/sha256_stream.rs | 100 | v[3].wrapping_add(t1) | v[3].wrapping_add(t2) | sha_stream | sha2::sha256_stream | compress: e = d + T2 for d + T1
+S06 | src/sha2/sha256_stream.rs | 115 | h[i] = h[i].wrapping_add(v[i]); | h[i] = v[i]; | sha_stream | sha2::sha256_stream | compress: the feed-forward dropped
+S07 | src/sha2/sha256_stream.rs | 146 | + 0x1_0000 * | + 0x8000 * | sha_stream | sha2::sha256_stream | load_block: byte 1 of a word shifted by 15
+S08 | src/sha2/sha256_stream.rs | 146 | + 0x1_0000 * | \| 0x1_0000 * | sha_stream | sha2::sha256_stream | load_block: a + made an \| (equivalent: the bits are disjoint)
+S09 | src/sha2/sha256_stream.rs | 172 | (i % 4) | (i % 3) | sha_stream | sha2::sha256_stream | to_digest: % 4 made % 3
+S10 | src/sha2/sha256_stream.rs | 299 | if r > 0 { | if r >= 0 { | sha_stream | sha2::sha256_stream | update: the buffer filled even when empty (equivalent)
+S11 | src/sha2/sha256_stream.rs | 300 | 64 - r < len { 64 - r } | 63 - r < len { 63 - r } | sha_stream | sha2::sha256_stream | update: the buffer filled one byte short
+S12 | src/sha2/sha256_stream.rs | 319 | if r + done == 64 { | if r + done >= 64 { | sha_stream | sha2::sha256_stream | update: == 64 as >= 64 (equivalent: r + done <= 64)
+S13 | src/sha2/sha256_stream.rs | 332 | while len - done >= 64 | while len - done > 64 | sha_stream | sha2::sha256_stream | update: a whole last block left in the buffer
+S14 | src/sha2/sha256_stream.rs | 363 | if done < len { | if done <= len { | sha_stream | sha2::sha256_stream | update: < as <= (equivalent: the copy is then of no bytes)
+S15 | src/sha2/sha256_stream.rs | 380 | c.count + len as u64 | c.count + done as u64 | sha_stream | sha2::sha256_stream | update: the buffered bytes not counted
+S16 | src/sha2/sha256_stream.rs | 408 | if r < 56 { | if r < 55 { | sha_stream | sha2::sha256_stream | finalize: the two-block padding from 55 bytes
+S17 | src/sha2/sha256_stream.rs | 408 | if r < 56 { | if r <= 56 { | sha_stream | sha2::sha256_stream | finalize: the two-block padding from 57 bytes
+S18 | src/sha2/sha256_stream.rs | 427 | last[r] = 0x80; | last[r] = 0x01; | sha_stream | sha2::sha256_stream | finalize: the padding's marker bit at the wrong end
+S19 | src/sha2/sha256_stream.rs | 424 | last[i] = c.buf[i]; | {} | sha_stream | sha2::sha256_stream | finalize: the buffered bytes dropped
+S20 | src/sha2/sha256_stream.rs | 409 | 8 * c.count; | 8 * (c.count % 0x1_0000_0000); | sha_stream | sha2::sha256_stream | finalize: the length counted in 32 bits
+S21 | src/sha2/sha256_stream.rs | 442 | (56 - 8 * k) | (if k == 0 { 57 } else { 56 - 8 * k }) | sha_stream | sha2::sha256_stream | finalize: the length's top byte shifted by 57
+S22 | src/sha2/sha256_stream.rs | 442 | (56 - 8 * k) | (if k == 1 { 40 } else { 56 - 8 * k }) | sha_stream | sha2::sha256_stream | finalize: the length's byte 1 taken from bits 40-47
+S23 | src/sha2/sha256_stream.rs | 442 | & 0xff; | & (if k == 4 { 0x7f } else { 0xff }); | sha_stream | sha2::sha256_stream | finalize: the length's byte 4 masked to 7 bits
+S24 | src/sha2/sha256_stream.rs | 442 | & 0xff; | & (if k == 6 { 0x7f } else { 0xff }); | sha_stream | sha2::sha256_stream | finalize: the length's byte 6 masked to 7 bits (wrong from 4 KiB)
+S25 | src/sha2/sha256_stream.rs | 442 | & 0xff; | & (if k == 7 { 0xf8 } else { 0xff }); | sha_stream | sha2::sha256_stream | finalize: the length's low 3 bits masked off (equivalent: l = 8 * count)
+S26 | src/sha2/sha256_stream.rs | 468 | if tb == 2 { | if tb >= 2 { | sha_stream | sha2::sha256_stream | finalize: == 2 as >= 2 (equivalent: tb is 1 or 2)
+
+# ---------------------------------------------------------------- HMAC.SHA256_Impl
+
+H01 | src/hmac/sha256_impl.rs | 150 | if len > 64 { | if len >= 64 { | hmac_impl | hmac::sha256_impl hmac::sha256_impl::exec | init_key: a 64-byte key hashed
+H02 | src/hmac/sha256_impl.rs | 126 | k0[j] ^ x | k0[j] \| x | hmac_impl | hmac::sha256_impl hmac::sha256_impl::exec | exec::xor_pad: ^ made \|
+H03 | src/hmac/sha256_impl.rs | 231 | xor_pad(&k0, 0x36) | xor_pad(&k0, 0x5C) | hmac_impl | hmac::sha256_impl hmac::sha256_impl::exec | init: ipad for opad
+H04 | src/hmac/sha256_impl.rs | 232 | xor_pad(&k0, 0x5C) | xor_pad(&k0, 0x5D) | hmac_impl | hmac::sha256_impl hmac::sha256_impl::exec | init: opad's constant changed
+H05 | src/hmac/sha256_impl.rs | 160 | k0[j] = d[j]; | {} | hmac_impl | hmac::sha256_impl hmac::sha256_impl::exec | init_key: a long key's digest dropped
+H06 | src/hmac/sha256_impl.rs | 267 | sha256_stream::update(&mut o, &c.o_pad); | {} | hmac_impl | hmac::sha256_impl hmac::sha256_impl::exec | finalize: the outer pad dropped
+H07 | src/hmac/sha256_impl.rs | 235 | sha256_stream::update(&mut inner, &i_pad); | sha256_stream::update(&mut inner, &k0); | hmac_impl | hmac::sha256_impl hmac::sha256_impl::exec | init: the inner hash absorbs K0, not K0 xor ipad
+H08 | src/hmac/sha256_impl.rs | 174 | k0[j] = key[j]; | k0[j + 1] = key[j]; | hmac_impl | hmac::sha256_impl hmac::sha256_impl::exec | init_key: a short key copied one byte late
+H09 | src/hmac/sha256_impl.rs | 120 | while j < 64 | while j < 63 | hmac_impl | hmac::sha256_impl hmac::sha256_impl::exec | exec::xor_pad: the last byte not xored
+
+# ---------------------------------------------------------------- SHA2.Functions
+
+# a: the executable twin alone.
+F01a | src/sha2/functions.rs | 96 | (!x & z) | (x & z) | sha_functions | sha2::functions sha2::functions::exec | Ch: the not dropped (exec twin)
+F02a | src/sha2/functions.rs | 105 | ^ (y & z) | ^ (y \| z) | sha_functions | sha2::functions sha2::functions::exec | Maj: an and made an or (exec twin)
+F03a | src/sha2/functions.rs | 114 | ROTR::<13>(x) | ROTR::<12>(x) | sha_functions | sha2::functions sha2::functions::exec | SIGMA_256_0: ROTR 13 made ROTR 12 (exec twin)
+F04a | src/sha2/functions.rs | 132 | SHR::<3>(x) | ROTR::<3>(x) | sha_functions | sha2::functions sha2::functions::exec | sigma_256_0: SHR made ROTR (exec twin)
+F05a | src/sha2/functions.rs | 141 | SHR::<10>(x) | ROTR::<10>(x) | sha_functions | sha2::functions sha2::functions::exec | sigma_256_1: SHR made ROTR (exec twin)
+F06a | src/sha2/functions.rs | 123 | ROTR::<25>(x) | ROTR::<22>(x) | sha_functions | sha2::functions sha2::functions::exec | SIGMA_256_1: ROTR 25 made ROTR 22 (exec twin)
+F07a | src/sha2/functions.rs | 157 | 0xc67178f2, | 0xc67178f3, | sha_functions | sha2::functions sha2::functions::exec | K_256: the last constant's low bit flipped (exec twin)
+
+# b: the spec function and its twin alike (the SPARK mutant's effect).
+F01b | src/sha2/functions.rs | 28 | W::and(W::not(x), z) | W::and(x, z) | sha_functions | sha_modules | Ch: the not dropped (spec and exec)
+F01b | src/sha2/functions.rs | 96 | (!x & z) | (x & z) | sha_functions | sha_modules | Ch: the not dropped (spec and exec)
+F02b | src/sha2/functions.rs | 35 | W::and(y, z)) | W::or(y, z)) | sha_functions | sha_modules | Maj: an and made an or (spec and exec)
+F02b | src/sha2/functions.rs | 105 | ^ (y & z) | ^ (y \| z) | sha_functions | sha_modules | Maj: an and made an or (spec and exec)
+F03b | src/sha2/functions.rs | 41 | ROTR::<13, u32>(x) | ROTR::<12, u32>(x) | sha_functions | sha_modules | SIGMA_256_0: ROTR 13 made ROTR 12 (spec and exec)
+F03b | src/sha2/functions.rs | 114 | ROTR::<13>(x) | ROTR::<12>(x) | sha_functions | sha_modules | SIGMA_256_0: ROTR 13 made ROTR 12 (spec and exec)
+F04b | src/sha2/functions.rs | 53 | SHR::<3, u32>(x) | ROTR::<3, u32>(x) | sha_functions | sha_modules | sigma_256_0: SHR made ROTR (spec and exec)
+F04b | src/sha2/functions.rs | 132 | SHR::<3>(x) | ROTR::<3>(x) | sha_functions | sha_modules | sigma_256_0: SHR made ROTR (spec and exec)
+F05b | src/sha2/functions.rs | 59 | SHR::<10, u32>(x) | ROTR::<10, u32>(x) | sha_functions | sha_modules | sigma_256_1: SHR made ROTR (spec and exec)
+F05b | src/sha2/functions.rs | 141 | SHR::<10>(x) | ROTR::<10>(x) | sha_functions | sha_modules | sigma_256_1: SHR made ROTR (spec and exec)
+F06b | src/sha2/functions.rs | 47 | ROTR::<25, u32>(x) | ROTR::<22, u32>(x) | sha_functions | sha_modules | SIGMA_256_1: ROTR 25 made ROTR 22 (spec and exec)
+F06b | src/sha2/functions.rs | 123 | ROTR::<25>(x) | ROTR::<22>(x) | sha_functions | sha_modules | SIGMA_256_1: ROTR 25 made ROTR 22 (spec and exec)
+F07b | src/sha2/functions.rs | 73 | 0xc67178f2, | 0xc67178f3, | sha_functions | sha_modules | K_256: the last constant's low bit flipped (spec and exec)
+F07b | src/sha2/functions.rs | 157 | 0xc67178f2, | 0xc67178f3, | sha_functions | sha_modules | K_256: the last constant's low bit flipped (spec and exec)

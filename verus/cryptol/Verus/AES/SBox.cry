@@ -1,0 +1,28 @@
+/*
+ * The Verus crate's S-boxes, checked against algorithms/AES/SBox.cry
+ * through Cryptol's FFI. The counterpart of the SPARK crate's
+ * spark/cryptol/SPARK/AES/SBox.cry.
+ *
+ * The foreign functions are the C exports of the Verus crate's FFI library
+ * (verus/ffi/), which verus/scripts/check-ffi.sh links here as SBox.so.
+ * They have no Cryptol body on purpose (see GF28.cry). They read the
+ * executable tables S_BOX and INV_S_BOX, proved equal to the spec's SBox
+ * and InvSBox.
+ */
+module Verus::AES::SBox where
+
+import algorithms::AES::SBox
+
+/** aes_impl::sub_byte: the spec's SBox, read at a byte. */
+foreign verus_sub_byte : [8] -> [8]
+
+/** aes_impl::inv_sub_byte: the spec's InvSBox, read at a byte. */
+foreign verus_inv_sub_byte : [8] -> [8]
+
+/** The executable SBox is SBox.cry's SBox at every byte (256 tests). */
+prop_SBox : [8] -> Bit
+property prop_SBox b = verus_sub_byte b == SBox @ b
+
+/** The executable InvSBox is SBox.cry's InvSBox at every byte (256 tests). */
+prop_InvSBox : [8] -> Bit
+property prop_InvSBox b = verus_inv_sub_byte b == InvSBox @ b

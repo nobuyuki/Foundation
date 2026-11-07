@@ -1,0 +1,19 @@
+/*
+ * NEGATIVE CONTROL: must FAIL. check-saw.sh fails if it proves.
+ *
+ * The MIR counterpart of ../../llvm/negative/encrypt_block_reversed_round_keys.saw.
+ *
+ * encrypt_block at k = 256 against Cipher`{256} of the round keys in
+ * reverse order, with every override and the tactic of aes_impl.saw's
+ * proof (z3 with Round, SubBytes, ShiftRows and AddRoundKey
+ * uninterpreted). It runs aes_impl.saw (the MIR one) first, for the overrides. The
+ * proof must fail with a counterexample, which shows that the overrides
+ * and the uninterpreted functions do not make the cipher proofs vacuous:
+ * which round key each round reads is checked. (SPARK's
+ * negative/encrypt_block_reversed_round_keys.saw.)
+ */
+
+include "../aes_impl.saw";
+
+verify_encrypt_block (rust_k "aes::aes_impl::encrypt_block" {{ 256 : [32] }}) 14 15
+  {{ \w s -> Cipher`{256} (reverse w) s }} "256 (of the reversed round keys)";

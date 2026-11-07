@@ -1,0 +1,15 @@
+/*
+ * NEGATIVE CONTROL: must FAIL. check-saw.sh fails if it proves.
+ *
+ * The MIR counterpart of ../../llvm/negative/x_times_without_reduction.saw.
+ *
+ * x_times against a wrong specification: the shift without the reduction
+ * by 0x1b, which differs from xTimes exactly when the top bit of b is set.
+ * The proof must fail with such a counterexample, which shows the
+ * llvm_verify in aes_impl.saw checks the bitcode against the term it is
+ * given. (SPARK's negative/x_times_without_reduction.saw.)
+ */
+
+include "../aes_impl_common.saw";
+
+verify_rme (rust "aes::aes_impl::x_times") "x_times" [] (byte_to_byte_contract {{ \b -> b << 1 }}) "\\b -> b << 1";

@@ -1,0 +1,15 @@
+/*
+ * NEGATIVE CONTROL: must FAIL. check-saw.sh fails if it proves.
+ *
+ * The MIR counterpart of ../../llvm/negative/decrypt_block_reversed_round_keys.saw.
+ *
+ * decrypt_block at k = 128 against InvCipher`{128} of the round keys in
+ * reverse order, with every override and the tactic of aes_impl.saw's
+ * proof. It runs aes_impl.saw (the MIR one) first, for the overrides. (SPARK's
+ * negative/decrypt_block_reversed_round_keys.saw.)
+ */
+
+include "../aes_impl.saw";
+
+verify_decrypt_block (rust_k "aes::aes_impl::decrypt_block" {{ 128 : [32] }}) 10 11
+  {{ \w s -> InvCipher`{128} (reverse w) s }} "128 (of the reversed round keys)";

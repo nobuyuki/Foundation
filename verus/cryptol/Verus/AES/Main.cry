@@ -1,0 +1,274 @@
+/*
+ * The Verus crate's AES encryption and decryption, checked against
+ * algorithms/AES/Main.cry through Cryptol's FFI. The counterpart of the
+ * SPARK crate's spark/cryptol/SPARK/AES/Main.cry.
+ *
+ * The foreign functions are the C exports of the Verus crate's FFI library
+ * (verus/ffi/), which verus/scripts/check-ffi.sh links here as Main.so.
+ * They have no Cryptol body on purpose (see GF28.cry).
+ *
+ * Main.cry's Encrypt and Decrypt take a [k] key and a [128] block, which
+ * Cryptol's C calling convention cannot pass (verus/doc/ffi.md, "Passing
+ * bit sequences"). The executable aes_impl::main::encrypt and decrypt take
+ * them as bytes, proved equal on the bits to Main.cry's, and the properties
+ * convert with Cryptol's own split and join: execEncrypt calls
+ * join (verus_encrypt`{k} (split key) (split in)).
+ *
+ * The domains are 2^(k + 128), so each property is a :check, with the test
+ * count stated in verus/cryptol/properties.txt, at each key size
+ * k = 128, 192 and 256 (Cryptol passes {k} as a leading size_t).
+ *
+ * The executable expand_key and encrypt_block or decrypt_block, which
+ * Verus::AES::KeyExpansion and Verus::AES::Cipher export, are also composed
+ * here as Main.cry composes KeyExpansion and Cipher (implEncrypt,
+ * implDecrypt) and checked against AES`{k}'s Encrypt and Decrypt, as the
+ * SPARK crate does. The SPARK crate's checks of its ghost spec's Encrypt
+ * and Decrypt, of its AES128, AES192 and AES256 instances, and of the
+ * known answers through them (prop_Encrypt128 .. prop_AES256_Decrypt,
+ * prop_AES128Example .. prop_AES256Example, prop_FIPS197_C) have no
+ * counterpart: a Verus spec function cannot be executed, and the
+ * instances are encrypt and decrypt at a const k. The known answers go
+ * through the executables (prop_Impl_AESExamples, prop_Impl_FIPS197_C,
+ * prop_Exec_AESExamples, prop_Exec_FIPS197_C).
+ */
+module Verus::AES::Main where
+
+import algorithms::AES::Types
+import algorithms::AES::Main
+import Verus::AES::KeyExpansion (verus_expand_key)
+import Verus::AES::Cipher (verus_encrypt_block, verus_decrypt_block)
+
+/**
+ * The executable AES's encryption at key size k, on bits, composed as
+ * Main.cry's AES`{k}.Encrypt composes KeyExpansion and Cipher: expand_key
+ * of the key's words, then encrypt_block of the block.
+ */
+implEncrypt : {k} (Key k) => [k] -> [128] -> [128]
+implEncrypt key in =
+  join (verus_encrypt_block`{k} (verus_expand_key`{k} (split (split key))) (split in))
+
+/**
+ * The executable AES's decryption at key size k, on bits, composed as
+ * Main.cry's AES`{k}.Decrypt: expand_key, then decrypt_block.
+ */
+implDecrypt : {k} (Key k) => [k] -> [128] -> [128]
+implDecrypt key in =
+  join (verus_decrypt_block`{k} (verus_expand_key`{k} (split (split key))) (split in))
+
+/** The executable expand_key and encrypt_block are AES`{k}.Encrypt. */
+prop_Impl_Encrypt : {k} (Key k) => [k] -> [128] -> Bit
+prop_Impl_Encrypt key in = implEncrypt`{k} key in == AES`{k}.Encrypt key in
+
+/** The executable expand_key and decrypt_block are AES`{k}.Decrypt. */
+prop_Impl_Decrypt : {k} (Key k) => [k] -> [128] -> Bit
+prop_Impl_Decrypt key in = implDecrypt`{k} key in == AES`{k}.Decrypt key in
+
+/** prop_Impl_Encrypt at k = 128. */
+prop_Impl_Encrypt128 : [128] -> [128] -> Bit
+property prop_Impl_Encrypt128 = prop_Impl_Encrypt`{128}
+
+/** prop_Impl_Encrypt at k = 192. */
+prop_Impl_Encrypt192 : [192] -> [128] -> Bit
+property prop_Impl_Encrypt192 = prop_Impl_Encrypt`{192}
+
+/** prop_Impl_Encrypt at k = 256. */
+prop_Impl_Encrypt256 : [256] -> [128] -> Bit
+property prop_Impl_Encrypt256 = prop_Impl_Encrypt`{256}
+
+/** prop_Impl_Decrypt at k = 128. */
+prop_Impl_Decrypt128 : [128] -> [128] -> Bit
+property prop_Impl_Decrypt128 = prop_Impl_Decrypt`{128}
+
+/** prop_Impl_Decrypt at k = 192. */
+prop_Impl_Decrypt192 : [192] -> [128] -> Bit
+property prop_Impl_Decrypt192 = prop_Impl_Decrypt`{192}
+
+/** prop_Impl_Decrypt at k = 256. */
+prop_Impl_Decrypt256 : [256] -> [128] -> Bit
+property prop_Impl_Decrypt256 = prop_Impl_Decrypt`{256}
+
+/**
+ * Tests.cry's AES128Example, AES192Example and AES256Example [AES Test
+ * Vectors] through the executable AES, as the SPARK crate's
+ * prop_AES128Example and its siblings do through its spec. The vectors are copied from Tests.cry.
+ */
+property prop_Impl_AESExamples =
+    map (implEncrypt`{128} key128) plain  == cipher128
+ /\ map (implDecrypt`{128} key128) cipher128 == plain
+ /\ map (implEncrypt`{192} key192) plain  == cipher192
+ /\ map (implDecrypt`{192} key192) cipher192 == plain
+ /\ map (implEncrypt`{256} key256) plain  == cipher256
+ /\ map (implDecrypt`{256} key256) cipher256 == plain
+  where
+    key128    = 0x2b7e151628aed2a6abf7158809cf4f3c
+    key192    = 0x8e73b0f7da0e6452c810f32b809079e562f8ead2522c6b7b
+    key256    = 0x603deb1015ca71be2b73aef0857d77811f352c073b6108d72d9810a30914dff4
+    plain     = [ 0x6bc1bee22e409f96e93d7e117393172a
+                , 0xae2d8a571e03ac9c9eb76fac45af8e51
+                , 0x30c81c46a35ce411e5fbc1191a0a52ef
+                , 0xf69f2445df4f9b17ad2b417be66c3710
+                ]
+    cipher128 = [ 0x3ad77bb40d7a3660a89ecaf32466ef97
+                , 0xf5d3d58503b9699de785895a96fdbaaf
+                , 0x43b1cd7f598ece23881b00e3ed030688
+                , 0x7b0c785e27e8ad3f8223207104725dd4
+                ]
+    cipher192 = [ 0xbd334f1d6e45f25ff712a214571fa5cc
+                , 0x974104846d0ad3ad7734ecb3ecee4eef
+                , 0xef7afd2270e2e60adce0ba2face6444e
+                , 0x9a4b41ba738d6c72fb16691603c18e0e
+                ]
+    cipher256 = [ 0xf3eed1bdb5d2a03c064b5a7e3db181f8
+                , 0x591ccb10d410ed26dc5ba74a31362870
+                , 0xb6ed21b99ca6f4f9f153e7b1beafed1d
+                , 0x23304b7a39f9f3ff067d8d8f9e24ecc7
+                ]
+
+/**
+ * FIPS-PUB-197's Appendix C examples, C.1 (AES-128), C.2 (AES-192) and
+ * C.3 (AES-256): the key 00 01 02 .. of k / 8 bytes and the plaintext
+ * 00 11 22 .. ff, copied from the standard (Tests.cry has no Appendix C).
+ * Each is checked through Main.cry's own AES`{k} first, so a vector copied
+ * wrong fails here and not in the Verus.
+ */
+fips197C : {k} (Key k) => [k] -> [128] -> Bit
+fips197C key out = AES`{k}.Encrypt key fips197CPlain == out
+                /\ AES`{k}.Decrypt key out == fips197CPlain
+
+/** The plaintext of every FIPS-PUB-197 Appendix C example. */
+fips197CPlain : [128]
+fips197CPlain = 0x00112233445566778899aabbccddeeff
+
+/**
+ * FIPS-PUB-197 Appendix C.1 to C.3 through the executable AES
+ * (implEncrypt, implDecrypt) and through Main.cry's AES.
+ */
+property prop_Impl_FIPS197_C =
+    fips197C`{128} key128 out128
+ /\ implEncrypt`{128} key128 fips197CPlain == out128
+ /\ implDecrypt`{128} key128 out128 == fips197CPlain
+ /\ fips197C`{192} key192 out192
+ /\ implEncrypt`{192} key192 fips197CPlain == out192
+ /\ implDecrypt`{192} key192 out192 == fips197CPlain
+ /\ fips197C`{256} key256 out256
+ /\ implEncrypt`{256} key256 fips197CPlain == out256
+ /\ implDecrypt`{256} key256 out256 == fips197CPlain
+  where
+    key128 = 0x000102030405060708090a0b0c0d0e0f
+    key192 = 0x000102030405060708090a0b0c0d0e0f1011121314151617
+    key256 = 0x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f
+    out128 = 0x69c4e0d86a7b0430d8cdb78070b4c55a
+    out192 = 0xdda97ca4864cdfe06eaf70a0ec0d7191
+    out256 = 0x8ea2b7ca516745bfeafc49904b496089
+
+/**
+ * aes_impl::main::encrypt, proved equal on the bits to Main.cry's
+ * AES`{k}.Encrypt, over bytes.
+ */
+foreign verus_encrypt : {k} (Key k) => [k / 8][8] -> [16][8] -> [16][8]
+
+/**
+ * aes_impl::main::decrypt, proved equal on the bits to Main.cry's
+ * AES`{k}.Decrypt, over bytes.
+ */
+foreign verus_decrypt : {k} (Key k) => [k / 8][8] -> [16][8] -> [16][8]
+
+/** The executable Encrypt at key size k, on bits: split, call, join. */
+execEncrypt : {k} (Key k) => [k] -> [128] -> [128]
+execEncrypt key in = join (verus_encrypt`{k} (split key) (split in))
+
+/** The executable Decrypt at key size k, on bits: split, call, join. */
+execDecrypt : {k} (Key k) => [k] -> [128] -> [128]
+execDecrypt key in = join (verus_decrypt`{k} (split key) (split in))
+
+/** The executable Encrypt is Main.cry's AES`{k}.Encrypt. */
+prop_Exec_Encrypt : {k} (Key k) => [k] -> [128] -> Bit
+prop_Exec_Encrypt key in = execEncrypt`{k} key in == AES`{k}.Encrypt key in
+
+/** The executable Decrypt is Main.cry's AES`{k}.Decrypt. */
+prop_Exec_Decrypt : {k} (Key k) => [k] -> [128] -> Bit
+prop_Exec_Decrypt key in = execDecrypt`{k} key in == AES`{k}.Decrypt key in
+
+/** prop_Exec_Encrypt at k = 128. */
+prop_Exec_Encrypt128 : [128] -> [128] -> Bit
+property prop_Exec_Encrypt128 = prop_Exec_Encrypt`{128}
+
+/** prop_Exec_Encrypt at k = 192. */
+prop_Exec_Encrypt192 : [192] -> [128] -> Bit
+property prop_Exec_Encrypt192 = prop_Exec_Encrypt`{192}
+
+/** prop_Exec_Encrypt at k = 256. */
+prop_Exec_Encrypt256 : [256] -> [128] -> Bit
+property prop_Exec_Encrypt256 = prop_Exec_Encrypt`{256}
+
+/** prop_Exec_Decrypt at k = 128. */
+prop_Exec_Decrypt128 : [128] -> [128] -> Bit
+property prop_Exec_Decrypt128 = prop_Exec_Decrypt`{128}
+
+/** prop_Exec_Decrypt at k = 192. */
+prop_Exec_Decrypt192 : [192] -> [128] -> Bit
+property prop_Exec_Decrypt192 = prop_Exec_Decrypt`{192}
+
+/** prop_Exec_Decrypt at k = 256. */
+prop_Exec_Decrypt256 : [256] -> [128] -> Bit
+property prop_Exec_Decrypt256 = prop_Exec_Decrypt`{256}
+
+/**
+ * Tests.cry's AES128Example, AES192Example and AES256Example [AES Test
+ * Vectors] through the executable Encrypt and Decrypt, as
+ * prop_Impl_AESExamples does through expand_key and the block ciphers. The
+ * vectors are copied from Tests.cry.
+ */
+property prop_Exec_AESExamples =
+    map (execEncrypt`{128} key128) plain  == cipher128
+ /\ map (execDecrypt`{128} key128) cipher128 == plain
+ /\ map (execEncrypt`{192} key192) plain  == cipher192
+ /\ map (execDecrypt`{192} key192) cipher192 == plain
+ /\ map (execEncrypt`{256} key256) plain  == cipher256
+ /\ map (execDecrypt`{256} key256) cipher256 == plain
+  where
+    key128    = 0x2b7e151628aed2a6abf7158809cf4f3c
+    key192    = 0x8e73b0f7da0e6452c810f32b809079e562f8ead2522c6b7b
+    key256    = 0x603deb1015ca71be2b73aef0857d77811f352c073b6108d72d9810a30914dff4
+    plain     = [ 0x6bc1bee22e409f96e93d7e117393172a
+                , 0xae2d8a571e03ac9c9eb76fac45af8e51
+                , 0x30c81c46a35ce411e5fbc1191a0a52ef
+                , 0xf69f2445df4f9b17ad2b417be66c3710
+                ]
+    cipher128 = [ 0x3ad77bb40d7a3660a89ecaf32466ef97
+                , 0xf5d3d58503b9699de785895a96fdbaaf
+                , 0x43b1cd7f598ece23881b00e3ed030688
+                , 0x7b0c785e27e8ad3f8223207104725dd4
+                ]
+    cipher192 = [ 0xbd334f1d6e45f25ff712a214571fa5cc
+                , 0x974104846d0ad3ad7734ecb3ecee4eef
+                , 0xef7afd2270e2e60adce0ba2face6444e
+                , 0x9a4b41ba738d6c72fb16691603c18e0e
+                ]
+    cipher256 = [ 0xf3eed1bdb5d2a03c064b5a7e3db181f8
+                , 0x591ccb10d410ed26dc5ba74a31362870
+                , 0xb6ed21b99ca6f4f9f153e7b1beafed1d
+                , 0x23304b7a39f9f3ff067d8d8f9e24ecc7
+                ]
+
+/**
+ * FIPS-PUB-197 Appendix C.1 to C.3 through the executable Encrypt and
+ * Decrypt, and through Main.cry's AES (fips197C).
+ */
+property prop_Exec_FIPS197_C =
+    fips197C`{128} key128 out128
+ /\ execEncrypt`{128} key128 fips197CPlain == out128
+ /\ execDecrypt`{128} key128 out128 == fips197CPlain
+ /\ fips197C`{192} key192 out192
+ /\ execEncrypt`{192} key192 fips197CPlain == out192
+ /\ execDecrypt`{192} key192 out192 == fips197CPlain
+ /\ fips197C`{256} key256 out256
+ /\ execEncrypt`{256} key256 fips197CPlain == out256
+ /\ execDecrypt`{256} key256 out256 == fips197CPlain
+  where
+    key128 = 0x000102030405060708090a0b0c0d0e0f
+    key192 = 0x000102030405060708090a0b0c0d0e0f1011121314151617
+    key256 = 0x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f
+    out128 = 0x69c4e0d86a7b0430d8cdb78070b4c55a
+    out192 = 0xdda97ca4864cdfe06eaf70a0ec0d7191
+    out256 = 0x8ea2b7ca516745bfeafc49904b496089

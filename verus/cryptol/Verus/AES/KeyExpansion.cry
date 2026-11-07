@@ -1,0 +1,102 @@
+/*
+ * The Verus crate's key expansion, checked against
+ * algorithms/AES/KeyExpansion.cry through Cryptol's FFI. The counterpart of
+ * the SPARK crate's spark/cryptol/SPARK/AES/KeyExpansion.cry.
+ *
+ * The foreign functions are the C exports of the Verus crate's FFI library
+ * (verus/ffi/), which verus/scripts/check-ffi.sh links here as
+ * KeyExpansion.so. They have no Cryptol body on purpose (see GF28.cry).
+ * Each is an executable function of aes_impl, proved equal to the spec
+ * function of its property. The SPARK crate checks its ghost spec's
+ * KeyExpansion at a handful of tests per key size, and on Tests.cry's
+ * vectors, and its executable Expand_Key at 1,000; only the second is here
+ * (prop_KeyExpansion128 and its siblings, and prop_Example128KeyExpansion
+ * and its siblings, have no counterpart: prop_Expand_Key_FIPS checks the
+ * same vectors).
+ *
+ * RotWord and SubWord have the domain [4][8], 2^32 words, and KeyExpansion
+ * a [Nk k]AESWord key, 2^k keys, so each property is a :check, with the
+ * test count stated in verus/cryptol/properties.txt. expand_key is checked
+ * at each key size k = 128, 192 and 256 through one export: Cryptol passes
+ * {k} to it as a leading size_t.
+ *
+ * algorithms::AES::KeyExpansion declares KeyExpansion foreign, with a
+ * Cryptol body and a Rust library that this repository does not build.
+ * check-ffi.sh fails if that library is ever loaded, so these properties
+ * compare Verus with the Cryptol body.
+ */
+module Verus::AES::KeyExpansion where
+
+import algorithms::AES::Types
+import algorithms::AES::KeyExpansion
+import algorithms::AES::Tests
+  (Example128KeyExpansion, Example192KeyExpansion, Example256KeyExpansion)
+
+/** aes_impl::rot_word, proved equal to the spec's RotWord. */
+foreign verus_rot_word : AESWord -> AESWord
+
+/** aes_impl::sub_word, proved equal to the spec's SubWord. */
+foreign verus_sub_word : AESWord -> AESWord
+
+/**
+ * aes_impl::rcon, proved equal to the spec's Rcon @ i at the indices
+ * 1 .. 10 that KeyExpansion reads (its precondition; the export checks it).
+ */
+foreign verus_rcon : [8] -> AESWord
+
+/**
+ * aes_impl::expand_key, proved equal to the spec's KeyExpansion, for the
+ * key size {k}: the first Nr k + 1 of the 15 blocks it returns.
+ */
+foreign verus_expand_key : {k} (Key k) => [Nk k]AESWord -> [Nr k + 1]Block
+
+/** The executable rot_word is KeyExpansion.cry's RotWord. */
+prop_RotWord : AESWord -> Bit
+property prop_RotWord a = verus_rot_word a == RotWord a
+
+/** The executable sub_word is KeyExpansion.cry's SubWord. */
+prop_SubWord : AESWord -> Bit
+property prop_SubWord a = verus_sub_word a == SubWord a
+
+/**
+ * The executable rcon is KeyExpansion.cry's Rcon at every index
+ * KeyExpansion reads, 1 .. 10. The Cryptol's element 0 is undefined, and
+ * rcon is not defined outside 1 .. 10, so the other indices are vacuous:
+ * ==> does not evaluate its right side when its left is False (:exhaust,
+ * 256 tests).
+ */
+prop_Rcon : [8] -> Bit
+property prop_Rcon i = (i >= 1 /\ i <= 10) ==> verus_rcon i == Rcon @ i
+
+/** The executable expand_key is KeyExpansion.cry's KeyExpansion, at k. */
+prop_Expand_Key : {k} (Key k) => [Nk k]AESWord -> Bit
+prop_Expand_Key key = verus_expand_key`{k} key == KeyExpansion`{k} key
+
+/** prop_Expand_Key at k = 128. */
+prop_Expand_Key128 : [Nk 128]AESWord -> Bit
+property prop_Expand_Key128 = prop_Expand_Key`{128}
+
+/** prop_Expand_Key at k = 192. */
+prop_Expand_Key192 : [Nk 192]AESWord -> Bit
+property prop_Expand_Key192 = prop_Expand_Key`{192}
+
+/** prop_Expand_Key at k = 256. */
+prop_Expand_Key256 : [Nk 256]AESWord -> Bit
+property prop_Expand_Key256 = prop_Expand_Key`{256}
+
+/**
+ * algorithms/AES/Tests.cry's Example128KeyExpansion, Example192KeyExpansion
+ * and Example256KeyExpansion [FIPS-PUB-197 Appendix A.1 to A.3] through the
+ * executable expand_key: on each of Tests.cry's keys (copied here),
+ * expand_key is KeyExpansion.cry's KeyExpansion, and Tests.cry's
+ * properties (imported) hold of that, so expand_key gives the vectors.
+ */
+property prop_Expand_Key_FIPS =
+    prop_Expand_Key`{128} (split (split 0x2b7e151628aed2a6abf7158809cf4f3c))
+ /\ prop_Expand_Key`{192}
+      (split (split 0x8e73b0f7da0e6452c810f32b809079e562f8ead2522c6b7b))
+ /\ prop_Expand_Key`{256}
+      (split (split 0x603deb1015ca71be2b73aef0857d77811f352c073b6108d72d9810a30914dff4))
+ /\ Example128KeyExpansion
+ /\ Example192KeyExpansion
+ /\ Example256KeyExpansion

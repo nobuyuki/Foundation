@@ -1,0 +1,17 @@
+/*
+ * NEGATIVE CONTROL: must FAIL. check-saw.sh fails if it proves.
+ *
+ * The MIR counterpart of ../../llvm/negative/expand_key_reversed_key.saw.
+ *
+ * expand_key at k = 128 against KeyExpansion`{128} of the key words in
+ * reverse order, with every override and the tactic of aes_impl.saw's
+ * proof (z3 with SubWord uninterpreted). It runs aes_impl.saw (the MIR one) first, for
+ * the overrides. The proof must fail with a counterexample: which key
+ * word each schedule word reads is checked. (SPARK's
+ * negative/expand_key_reversed_key.saw.)
+ */
+
+include "../aes_impl.saw";
+
+verify_expand_key (rust_k "aes::aes_impl::expand_key" {{ 128 : [32] }}) 4 10 4
+  {{ \key -> KeyExpansion`{128} (reverse key) }} "128 (of the reversed key)";

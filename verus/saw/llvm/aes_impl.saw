@@ -1,0 +1,326 @@
+/*
+ * llvm_verify of aes::aes_impl (verus/src/aes/aes_impl.rs) and
+ * aes::aes_impl::main against NSA's Cryptol, directly: the Verus spec
+ * layer plays no part (it is erased from the build). It proves the
+ * leaves, and the key schedule and the ciphers at k = 128, 192 and 256:
+ * expand_key = KeyExpansion.cry's KeyExpansion`{k}, encrypt_block =
+ * Cipher.cry's Cipher`{k}, decrypt_block = InvCipher`{k},
+ * decrypt_block_prime = InvCipher'`{k}, and encrypt and decrypt =
+ * Main.cry's AES`{k}.Encrypt and .Decrypt.
+ *
+ * Shaped after algorithms/AES/rust/Cipher/theorems/saw.py and SPARK's
+ * saw/aes_impl.saw: a contract per shape of function, leaves first, each
+ * verified leaf passed as an override to the functions that call it, rme
+ * for the leaves, and z3 with the overridden compositions left
+ * uninterpreted for the ciphers. Every proof is of the one module
+ * ../obj/foundation_verus.bc, so every override is a proof, not an
+ * assumption (check-saw.sh refuses any assumed spec in saw/).
+ *
+ * Fixed key sizes, as NSA's own proofs (doc/saw.md, "Why fixed sizes").
+ * Verus proves the same functions for every key size against the Verus
+ * spec layer.
+ */
+
+include "aes_impl_common.saw";
+
+/* --- the leaves ----------------------------------------------------------- */
+
+/*
+ * x_times = GF28.cry's xTimes [FIPS-PUB-197 Section 4.2.1]:
+ *   xTimes b = b << 1 ^ (if head b then 0x1b else 0x00)
+ */
+x_times <- verify_rme rust__aes__aes_impl__x_times "x_times" []
+             (byte_to_byte_contract {{ xTimes }}) "GF28::xTimes";
+
+/*
+ * dot = GF28.cry's (•) [FIPS-PUB-197 Section 4.2]: pmod (pmult b c)
+ * 0x11b. No cipher calls it (they use x_times); it is the general
+ * product, proved for every pair.
+ */
+dot <- verify_rme rust__aes__aes_impl__dot "dot" []
+         (byte_byte_to_byte_contract {{ \b c -> b • c }}) "GF28::(•)";
+
+/*
+ * sub_byte and inv_sub_byte = SBox.cry's SBox @ b and InvSBox @ b
+ * [FIPS-PUB-197 Tables 4 and 6]: lookups in the implementation's own
+ * constant tables.
+ */
+sub_byte <- verify_rme rust__aes__aes_impl__sub_byte "sub_byte" []
+              (byte_to_byte_contract {{ \b -> SBox @ b }}) "\\b -> SBox::SBox @ b";
+inv_sub_byte <- verify_rme rust__aes__aes_impl__inv_sub_byte "inv_sub_byte" []
+                  (byte_to_byte_contract {{ \b -> InvSBox @ b }}) "\\b -> SBox::InvSBox @ b";
+
+/*
+ * sub_bytes and inv_sub_bytes = Cipher.cry's SubBytes and InvSubBytes
+ * [FIPS-PUB-197 Sections 5.1.1 and 5.3.2]: SBox @@ bs and InvSBox @@ bs,
+ * with sub_byte's (inv_sub_byte's) proof as the override for the 16
+ * calls.
+ */
+sub_bytes <- verify_rme rust__aes__aes_impl__sub_bytes "sub_bytes" [sub_byte]
+               (block_in_place_contract {{ SubBytes }}) "Cipher::SubBytes";
+inv_sub_bytes <- verify_rme rust__aes__aes_impl__inv_sub_bytes "inv_sub_bytes" [inv_sub_byte]
+                   (block_in_place_contract {{ InvSubBytes }}) "Cipher::InvSubBytes";
+
+/*
+ * shift_rows and inv_shift_rows = Cipher.cry's ShiftRows and
+ * InvShiftRows [FIPS-PUB-197 Sections 5.1.2 and 5.3.1]: permutations of
+ * the 16 bytes.
+ */
+shift_rows <- verify_rme rust__aes__aes_impl__shift_rows "shift_rows" []
+                (block_in_place_contract {{ ShiftRows }}) "Cipher::ShiftRows";
+inv_shift_rows <- verify_rme rust__aes__aes_impl__inv_shift_rows "inv_shift_rows" []
+                    (block_in_place_contract {{ InvShiftRows }}) "Cipher::InvShiftRows";
+
+/*
+ * add_round_key = Cipher.cry's AddRoundKey [FIPS-PUB-197 Section 5.1.4]:
+ *   AddRoundKey bs w = bs ^ w
+ */
+add_round_key <- verify_rme rust__aes__aes_impl__add_round_key "add_round_key" []
+                   (block_key_contract {{ AddRoundKey }}) "Cipher::AddRoundKey";
+
+/*
+ * mix_column = Cipher.cry's MixColumnsStep [FIPS-PUB-197 Section 5.1.3],
+ * the products by 0x02 and 0x03 (GF28.cry's •) made with x_times, whose
+ * proof is the override.
+ */
+mix_column <- verify_rme rust__aes__aes_impl__mix_column "mix_column" [x_times]
+                (word_to_word_contract {{ MixColumnsStep }}) "Cipher::MixColumnsStep";
+
+/*
+ * inv_mix_byte: one row of Cipher.cry's InvMixColumnsStep [FIPS-PUB-197
+ * Section 5.3.3], 0x0e • a ^ 0x0b • b ^ 0x0d • c ^ 0x09 • d, with
+ * x_times alone. inv_mix_column calls it on the column rotated by one
+ * byte per row, so its contract is row 0.
+ */
+inv_mix_byte <- verify_rme rust__aes__aes_impl__inv_mix_byte "inv_mix_byte" [x_times]
+                  (do {
+                     a <- llvm_fresh_var "a" byte_t;
+                     b <- llvm_fresh_var "b" byte_t;
+                     c <- llvm_fresh_var "c" byte_t;
+                     d <- llvm_fresh_var "d" byte_t;
+                     llvm_execute_func [llvm_term a, llvm_term b, llvm_term c, llvm_term d];
+                     llvm_return (llvm_term {{ InvMixColumnsStep [a, b, c, d] @ 0 }});
+                   })
+                  "\\a b c d -> Cipher::InvMixColumnsStep [a, b, c, d] @ 0";
+
+/*
+ * inv_mix_column = Cipher.cry's InvMixColumnsStep: row r is
+ * inv_mix_byte of the column rotated left by r, which is
+ * InvMixColumnsStep's row r because its matrix is circulant.
+ */
+inv_mix_column <- verify_rme rust__aes__aes_impl__inv_mix_column "inv_mix_column" [inv_mix_byte]
+                    (word_to_word_contract {{ InvMixColumnsStep }}) "Cipher::InvMixColumnsStep";
+
+/*
+ * column (private): column j of a block, as Cipher.cry's MixColumns cuts
+ * it with split, for j < 4 (its requires). z3, not rme: j is a 64-bit
+ * index, and rme did not finish (20 minutes) on 4 * j and its overflow
+ * check.
+ */
+column <- verify_symbol rust__aes__aes_impl__column "column" []
+            (do {
+               s <- llvm_fresh_var "s" block_t;
+               p <- llvm_alloc_readonly block_t;
+               llvm_points_to p (llvm_term s);
+               j <- llvm_fresh_var "j" (llvm_int 64);
+               llvm_precond {{ j < 4 }};
+               llvm_execute_func [p, llvm_term j];
+               llvm_return (llvm_term (word_value {{ (split s : [4][4][8]) @ j }}));
+             })
+            z3 "z3" "\\s j -> (split s : [4]AESWord) @ j";
+
+/*
+ * mix_columns and inv_mix_columns = Cipher.cry's MixColumns and
+ * InvMixColumns: join (map MixColumnsStep (split bs)), with column and
+ * the column step as overrides.
+ */
+mix_columns <- verify_rme rust__aes__aes_impl__mix_columns "mix_columns" [column, mix_column]
+                 (block_in_place_contract {{ MixColumns }}) "Cipher::MixColumns";
+inv_mix_columns <- verify_rme rust__aes__aes_impl__inv_mix_columns "inv_mix_columns" [column, inv_mix_column]
+                     (block_in_place_contract {{ InvMixColumns }}) "Cipher::InvMixColumns";
+
+/* --- the rounds ----------------------------------------------------------- */
+
+/*
+ * round = Cipher.cry's Round [FIPS-PUB-197 Section 5.1]:
+ *   Round xs ki = AddRoundKey (MixColumns (ShiftRows (SubBytes xs))) ki
+ * inv_round = Cipher.cry's InvRound [FIPS-PUB-197 Section 5.3]:
+ *   InvRound xs ki = InvMixColumns (AddRoundKey (InvSubBytes (InvShiftRows xs)) ki)
+ * inv_round_prime = Cipher.cry's InvRound':
+ *   InvRound' xs ki = InvSubBytes (InvShiftRows (InvMixColumns (AddRoundKey xs ki)))
+ * Each by its four steps' proofs as overrides. inv_round_prime by z3
+ * with the four uninterpreted, not rme: there InvSubBytes comes last, on
+ * the xor of the others, and rme had not finished after 14 minutes (SPARK
+ * proves its spec layer's InvRound' by z3 too).
+ */
+round <- verify_rme rust__aes__aes_impl__round "round"
+           [sub_bytes, shift_rows, mix_columns, add_round_key]
+           (block_key_contract {{ Round }}) "Cipher::Round";
+inv_round <- verify_rme rust__aes__aes_impl__inv_round "inv_round"
+               [inv_shift_rows, inv_sub_bytes, add_round_key, inv_mix_columns]
+               (block_key_contract {{ InvRound }}) "Cipher::InvRound";
+inv_round_prime <- verify_symbol rust__aes__aes_impl__inv_round_prime "inv_round_prime"
+                     [inv_shift_rows, inv_sub_bytes, add_round_key, inv_mix_columns]
+                     (block_key_contract {{ InvRound' }})
+                     (w4_unint_z3 ["InvShiftRows", "InvSubBytes", "AddRoundKey", "InvMixColumns"])
+                     "w4_unint_z3 InvShiftRows InvSubBytes AddRoundKey InvMixColumns"
+                     "Cipher::InvRound'";
+
+/* --- the key schedule's leaves --------------------------------------------- */
+
+/*
+ * sub_word, rot_word and xor_word = KeyExpansion.cry's SubWord, RotWord
+ * and (^) on words [FIPS-PUB-197 Section 5.2]; rcon i = Rcon @ i for the
+ * indices 1 to 10 the key schedule reads (its requires). Rcon @ 0 is
+ * Cryptol's undefined, and SAW evaluates it when it indexes Rcon at a
+ * symbolic i (an error, though the precondition rules 0 out), so the
+ * contract indexes the ten defined entries, drop`{1} Rcon, at i - 1.
+ */
+sub_word <- verify_rme rust__aes__aes_impl__sub_word "sub_word" [sub_byte]
+              (word_to_word_contract {{ SubWord }}) "KeyExpansion::SubWord";
+rot_word <- verify_rme rust__aes__aes_impl__rot_word "rot_word" []
+              (word_to_word_contract {{ RotWord }}) "KeyExpansion::RotWord";
+xor_word <- verify_rme rust__aes__aes_impl__xor_word "xor_word" []
+              (word_word_to_word_contract {{ \a b -> a ^ b }}) "\\a b -> a ^ b";
+rcon <- verify_symbol rust__aes__aes_impl__rcon "rcon" []
+          (do {
+             i <- llvm_fresh_var "i" (llvm_int 64);
+             llvm_precond {{ 1 <= i /\ i <= 10 }};
+             llvm_execute_func [llvm_term i];
+             llvm_return (llvm_term (word_value {{ (drop`{1} Rcon) @ (i - 1) }}));
+           })
+          z3 "z3" "\\i -> (drop`{1} KeyExpansion::Rcon) @ (i - 1), which is Rcon @ i for 1 <= i <= 10";
+
+/* --- the key schedule and the ciphers, k = 128, 192, 256 ------------------ */
+
+/*
+ * expand_key = KeyExpansion.cry's KeyExpansion`{k} [FIPS-PUB-197 Section
+ * 5.2], for each key size: the first Nr k + 1 blocks of the result are
+ * KeyExpansion`{k} of the first Nk k words of the key, the rest zero. The
+ * 4 * (Nr k + 1) words are computed with sub_word's, rot_word's,
+ * xor_word's and rcon's proofs as the overrides, and z3 with SubWord left
+ * uninterpreted: both sides apply it to the same words. At each size the
+ * key is Nk k words long, and also 8, the length encrypt and decrypt pass
+ * (key_words_of's [AESWord; 8]), so that this proof is their override.
+ */
+let verify_expand_key symbol (nk : Int) (nr : Int) (len : Int) (f : Term) (size : String) =
+  verify_symbol symbol (str_concat (str_concat (str_concat "expand_key at k = " size) ", key words: ") (show len))
+    [sub_word, rot_word, xor_word, rcon]
+    (expand_key_contract nk nr len f) (w4_unint_z3 ["SubWord"]) "w4_unint_z3 SubWord"
+    (str_concat (str_concat "KeyExpansion::KeyExpansion`{" size) "}");
+
+expand_key_128 <- verify_expand_key rust__aes__aes_impl__expand_key__128 4 10 4 {{ KeyExpansion`{128} }} "128";
+expand_key_192 <- verify_expand_key rust__aes__aes_impl__expand_key__192 6 12 6 {{ KeyExpansion`{192} }} "192";
+expand_key_256 <- verify_expand_key rust__aes__aes_impl__expand_key__256 8 14 8 {{ KeyExpansion`{256} }} "256";
+expand_key_128_8 <- verify_expand_key rust__aes__aes_impl__expand_key__128 4 10 8 {{ KeyExpansion`{128} }} "128";
+expand_key_192_8 <- verify_expand_key rust__aes__aes_impl__expand_key__192 6 12 8 {{ KeyExpansion`{192} }} "192";
+
+/*
+ * encrypt_block = Cipher.cry's Cipher`{k} [FIPS-PUB-197 Section 5.1],
+ * for each key size:
+ *   Cipher ([w0] # ws # [wr]) in =
+ *     AddRoundKey (ShiftRows (SubBytes (foldl Round (AddRoundKey in w0) ws))) wr
+ * with round's, sub_bytes', shift_rows' and add_round_key's proofs as
+ * overrides, and z3 with those four left uninterpreted (the template's
+ * z3 ["Round", "SubBytes", "ShiftRows"], plus AddRoundKey). The round
+ * keys are Nr k + 1 blocks, and also 15, the [Block; 15] encrypt passes.
+ */
+let verify_cipher symbol (name : String) (nr : Int) (len : Int) (f : Term) (cryptol : String)
+                  overrides (unint : [String]) (unint_name : String) =
+  verify_symbol symbol (str_concat (str_concat name ", round keys: ") (show len))
+    overrides (cipher_contract nr len f) (w4_unint_z3 unint) unint_name cryptol;
+
+let encrypt_overrides = [round, sub_bytes, shift_rows, add_round_key];
+let encrypt_unint = ["Round", "SubBytes", "ShiftRows", "AddRoundKey"];
+let encrypt_unint_name = "w4_unint_z3 Round SubBytes ShiftRows AddRoundKey";
+let verify_encrypt_block symbol (nr : Int) (len : Int) (f : Term) (size : String) =
+  verify_cipher symbol (str_concat "encrypt_block at k = " size) nr len f
+    (str_concat (str_concat "Cipher::Cipher`{" size) "}")
+    encrypt_overrides encrypt_unint encrypt_unint_name;
+
+encrypt_block_128 <- verify_encrypt_block rust__aes__aes_impl__encrypt_block__128 10 11 {{ Cipher`{128} }} "128";
+encrypt_block_192 <- verify_encrypt_block rust__aes__aes_impl__encrypt_block__192 12 13 {{ Cipher`{192} }} "192";
+encrypt_block_256 <- verify_encrypt_block rust__aes__aes_impl__encrypt_block__256 14 15 {{ Cipher`{256} }} "256";
+encrypt_block_128_15 <- verify_encrypt_block rust__aes__aes_impl__encrypt_block__128 10 15 {{ Cipher`{128} }} "128";
+encrypt_block_192_15 <- verify_encrypt_block rust__aes__aes_impl__encrypt_block__192 12 15 {{ Cipher`{192} }} "192";
+
+/*
+ * decrypt_block = Cipher.cry's InvCipher`{k} [FIPS-PUB-197 Section 5.3],
+ * for each key size:
+ *   InvCipher ([w0] # ws # [wr]) in =
+ *     AddRoundKey (InvSubBytes (InvShiftRows
+ *       (foldl InvRound (AddRoundKey in wr) (reverse ws)))) w0
+ * with inv_round's, inv_sub_bytes', inv_shift_rows' and add_round_key's
+ * proofs as overrides, and z3 with those four left uninterpreted.
+ */
+let decrypt_overrides = [inv_round, inv_sub_bytes, inv_shift_rows, add_round_key];
+let decrypt_unint = ["InvRound", "InvSubBytes", "InvShiftRows", "AddRoundKey"];
+let decrypt_unint_name = "w4_unint_z3 InvRound InvSubBytes InvShiftRows AddRoundKey";
+let verify_decrypt_block symbol (nr : Int) (len : Int) (f : Term) (size : String) =
+  verify_cipher symbol (str_concat "decrypt_block at k = " size) nr len f
+    (str_concat (str_concat "Cipher::InvCipher`{" size) "}")
+    decrypt_overrides decrypt_unint decrypt_unint_name;
+
+decrypt_block_128 <- verify_decrypt_block rust__aes__aes_impl__decrypt_block__128 10 11 {{ InvCipher`{128} }} "128";
+decrypt_block_192 <- verify_decrypt_block rust__aes__aes_impl__decrypt_block__192 12 13 {{ InvCipher`{192} }} "192";
+decrypt_block_256 <- verify_decrypt_block rust__aes__aes_impl__decrypt_block__256 14 15 {{ InvCipher`{256} }} "256";
+decrypt_block_128_15 <- verify_decrypt_block rust__aes__aes_impl__decrypt_block__128 10 15 {{ InvCipher`{128} }} "128";
+decrypt_block_192_15 <- verify_decrypt_block rust__aes__aes_impl__decrypt_block__192 12 15 {{ InvCipher`{192} }} "192";
+
+/*
+ * decrypt_block_prime = Cipher.cry's InvCipher'`{k}, FIPS 197's
+ * equivalent inverse cipher [FIPS-PUB-197 Section 5.3.5], against which
+ * NSA's template proves its inv_cipher:
+ *   InvCipher' ([w0] # ws # [wr]) in =
+ *     AddRoundKey (foldl InvRound' (AddRoundKey ...)) ...
+ * with inv_round_prime's and add_round_key's proofs (and the steps') as
+ * overrides, and z3 with them uninterpreted. Nothing in the crate calls
+ * it but the FFI export; SPARK leaves it out of SAW, NSA's template
+ * proves it.
+ */
+let decrypt_prime_overrides = [inv_round_prime, inv_sub_bytes, inv_shift_rows, inv_mix_columns, add_round_key];
+let decrypt_prime_unint = ["InvRound'", "InvSubBytes", "InvShiftRows", "InvMixColumns", "AddRoundKey"];
+let decrypt_prime_unint_name = "w4_unint_z3 InvRound' InvSubBytes InvShiftRows InvMixColumns AddRoundKey";
+let verify_decrypt_block_prime symbol (nr : Int) (len : Int) (f : Term) (size : String) =
+  verify_cipher symbol (str_concat "decrypt_block_prime at k = " size) nr len f
+    (str_concat (str_concat "Cipher::InvCipher'`{" size) "}")
+    decrypt_prime_overrides decrypt_prime_unint decrypt_prime_unint_name;
+
+decrypt_block_prime_128 <- verify_decrypt_block_prime rust__aes__aes_impl__decrypt_block_prime__128 10 11 {{ InvCipher'`{128} }} "128";
+decrypt_block_prime_192 <- verify_decrypt_block_prime rust__aes__aes_impl__decrypt_block_prime__192 12 13 {{ InvCipher'`{192} }} "192";
+decrypt_block_prime_256 <- verify_decrypt_block_prime rust__aes__aes_impl__decrypt_block_prime__256 14 15 {{ InvCipher'`{256} }} "256";
+
+/* --- aes::aes_impl::main: on the bits, k = 128, 192, 256 ----------------- */
+
+/*
+ * encrypt and decrypt = Main.cry's AES`{k}.Encrypt and .Decrypt:
+ *   Encrypt key in = join (Cipher`{k} (KeyExpansion`{k} (split (split key))) (split in))
+ * key_words_of (the key's bytes into [AESWord; 8]) is executed in place;
+ * expand_key's proof at 8 key words and encrypt_block's (decrypt_block's)
+ * at 15 round keys are the overrides, and z3 with KeyExpansion and Cipher
+ * (InvCipher) uninterpreted. SPARK proves its spec layer's Main against
+ * Main.cry, not its Impl.Main (the FFI checks that one); here the
+ * implementation's is proved.
+ */
+let verify_main symbol (name : String) (nbytes : Int) (f : Term) overrides (unint : [String]) (cryptol : String) =
+  verify_symbol symbol name overrides (main_contract nbytes f)
+    (w4_unint_z3 unint) (str_concat "w4_unint_z3 KeyExpansion " (str_concat (nth unint 1) "")) cryptol;
+
+encrypt_128 <- verify_main rust__aes__aes_impl__main__encrypt__128 "main::encrypt at k = 128" 16
+                 {{ (AES`{128}).Encrypt }} [expand_key_128_8, encrypt_block_128_15]
+                 ["KeyExpansion", "Cipher"] "Main::AES`{128}.Encrypt";
+encrypt_192 <- verify_main rust__aes__aes_impl__main__encrypt__192 "main::encrypt at k = 192" 24
+                 {{ (AES`{192}).Encrypt }} [expand_key_192_8, encrypt_block_192_15]
+                 ["KeyExpansion", "Cipher"] "Main::AES`{192}.Encrypt";
+encrypt_256 <- verify_main rust__aes__aes_impl__main__encrypt__256 "main::encrypt at k = 256" 32
+                 {{ (AES`{256}).Encrypt }} [expand_key_256, encrypt_block_256]
+                 ["KeyExpansion", "Cipher"] "Main::AES`{256}.Encrypt";
+decrypt_128 <- verify_main rust__aes__aes_impl__main__decrypt__128 "main::decrypt at k = 128" 16
+                 {{ (AES`{128}).Decrypt }} [expand_key_128_8, decrypt_block_128_15]
+                 ["KeyExpansion", "InvCipher"] "Main::AES`{128}.Decrypt";
+decrypt_192 <- verify_main rust__aes__aes_impl__main__decrypt__192 "main::decrypt at k = 192" 24
+                 {{ (AES`{192}).Decrypt }} [expand_key_192_8, decrypt_block_192_15]
+                 ["KeyExpansion", "InvCipher"] "Main::AES`{192}.Decrypt";
+decrypt_256 <- verify_main rust__aes__aes_impl__main__decrypt__256 "main::decrypt at k = 256" 32
+                 {{ (AES`{256}).Decrypt }} [expand_key_256, decrypt_block_256]
+                 ["KeyExpansion", "InvCipher"] "Main::AES`{256}.Decrypt";

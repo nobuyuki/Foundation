@@ -1,0 +1,189 @@
+/*
+ * llvm_verify of sha2::sha256_stream (verus/src/sha2/sha256_stream.rs)
+ * and hmac::sha256_impl (verus/src/hmac/sha256_impl.rs) against NSA's
+ * Cryptol, directly: the Verus spec layer plays no part (it is erased
+ * from the build). As SPARK's saw/sha256_impl.saw: the leaves (ROTR, SHR,
+ * the SIGMA and sigma functions, Ch, Maj), compress = Main.cry's `step`
+ * at SHA-256 for every hash value and block, hash = Main.cry's `hash` at
+ * fixed message lengths, and hmac_sha256 = HMAC/Main.cry's HMAC at fixed
+ * key and text lengths.
+ *
+ * Fixed lengths, because SAW executes the code symbolically: loop bounds
+ * and buffer sizes must be concrete, one proof per length (doc/saw.md,
+ * "Why fixed sizes"). Verus proves the same functions for every length
+ * against the Verus spec layer.
+ */
+
+include "sha256_impl_common.saw";
+
+/* --- sha2::notation::exec: ROTR and SHR at w = 32 -------------------------- */
+
+/*
+ * ROTR::<n> and SHR::<n> = Notation.cry's ROTR`{n, 32} and SHR`{n, 32}
+ * (Notation.cry:60 and :67, [FIPS-PUB-180-4 Section 3.2]), at the n the
+ * SIGMA and sigma functions use. The Rust ROTR is u32::rotate_right, the
+ * Cryptol x >>> n; rme decides them equal. These are #[inline(always)]
+ * in the source; check-saw.sh compiles the bitcode with LLVM's passes off
+ * (-C no-prepopulate-passes), so that each stays a function SAW can prove
+ * and pass as an override (doc/saw.md, "The bitcode").
+ */
+let word_to_word_contract (f : Term) = do {
+  x <- llvm_fresh_var "x" word_t;
+  llvm_execute_func [llvm_term x];
+  llvm_return (llvm_term {{ f x }});
+};
+let three_words_contract (f : Term) = do {
+  x <- llvm_fresh_var "x" word_t;
+  y <- llvm_fresh_var "y" word_t;
+  z <- llvm_fresh_var "z" word_t;
+  llvm_execute_func [llvm_term x, llvm_term y, llvm_term z];
+  llvm_return (llvm_term {{ f x y z }});
+};
+
+let verify_word symbol (name : String) overrides (f : Term) (cryptol : String) =
+  verify_symbol symbol name overrides (word_to_word_contract f) rme "rme" cryptol;
+
+rotr_2  <- verify_word rust__sha2__notation__exec__ROTR__2  "notation::exec::ROTR::<2>"  [] {{ ROTR`{2, 32} }}  "Notation::ROTR`{2, 32}";
+rotr_13 <- verify_word rust__sha2__notation__exec__ROTR__13 "notation::exec::ROTR::<13>" [] {{ ROTR`{13, 32} }} "Notation::ROTR`{13, 32}";
+rotr_22 <- verify_word rust__sha2__notation__exec__ROTR__22 "notation::exec::ROTR::<22>" [] {{ ROTR`{22, 32} }} "Notation::ROTR`{22, 32}";
+rotr_6  <- verify_word rust__sha2__notation__exec__ROTR__6  "notation::exec::ROTR::<6>"  [] {{ ROTR`{6, 32} }}  "Notation::ROTR`{6, 32}";
+rotr_11 <- verify_word rust__sha2__notation__exec__ROTR__11 "notation::exec::ROTR::<11>" [] {{ ROTR`{11, 32} }} "Notation::ROTR`{11, 32}";
+rotr_25 <- verify_word rust__sha2__notation__exec__ROTR__25 "notation::exec::ROTR::<25>" [] {{ ROTR`{25, 32} }} "Notation::ROTR`{25, 32}";
+rotr_7  <- verify_word rust__sha2__notation__exec__ROTR__7  "notation::exec::ROTR::<7>"  [] {{ ROTR`{7, 32} }}  "Notation::ROTR`{7, 32}";
+rotr_18 <- verify_word rust__sha2__notation__exec__ROTR__18 "notation::exec::ROTR::<18>" [] {{ ROTR`{18, 32} }} "Notation::ROTR`{18, 32}";
+rotr_17 <- verify_word rust__sha2__notation__exec__ROTR__17 "notation::exec::ROTR::<17>" [] {{ ROTR`{17, 32} }} "Notation::ROTR`{17, 32}";
+rotr_19 <- verify_word rust__sha2__notation__exec__ROTR__19 "notation::exec::ROTR::<19>" [] {{ ROTR`{19, 32} }} "Notation::ROTR`{19, 32}";
+shr_3   <- verify_word rust__sha2__notation__exec__SHR__3   "notation::exec::SHR::<3>"   [] {{ SHR`{3, 32} }}   "Notation::SHR`{3, 32}";
+shr_10  <- verify_word rust__sha2__notation__exec__SHR__10  "notation::exec::SHR::<10>"  [] {{ SHR`{10, 32} }}  "Notation::SHR`{10, 32}";
+
+/* --- sha2::functions::exec: the SIGMA and sigma functions, Ch, Maj --------- */
+
+/*
+ * SIGMA_256_0/1 and sigma_256_0/1 = Functions.cry's SIGMA_256_0/1 and
+ * sigma_256_0/1 (Functions.cry:26-29, [FIPS-PUB-180-4 Section 4.1.2]),
+ * with their three ROTR/SHR proofs as overrides.
+ */
+sigma_0 <- verify_word rust__sha2__functions__exec__SIGMA_256_0 "functions::exec::SIGMA_256_0"
+             [rotr_2, rotr_13, rotr_22] {{ SIGMA_256_0 }} "Functions::SIGMA_256_0";
+sigma_1 <- verify_word rust__sha2__functions__exec__SIGMA_256_1 "functions::exec::SIGMA_256_1"
+             [rotr_6, rotr_11, rotr_25] {{ SIGMA_256_1 }} "Functions::SIGMA_256_1";
+small_sigma_0 <- verify_word rust__sha2__functions__exec__sigma_256_0 "functions::exec::sigma_256_0"
+                   [rotr_7, rotr_18, shr_3] {{ sigma_256_0 }} "Functions::sigma_256_0";
+small_sigma_1 <- verify_word rust__sha2__functions__exec__sigma_256_1 "functions::exec::sigma_256_1"
+                   [rotr_17, rotr_19, shr_10] {{ sigma_256_1 }} "Functions::sigma_256_1";
+
+/*
+ * Ch and Maj = Functions.cry's Ch and Maj (Functions.cry:13 and :23,
+ * [FIPS-PUB-180-4 Section 4.1]) at [32]. The Cryptol takes a tuple; the
+ * Rust three u32.
+ */
+ch <- verify_symbol rust__sha2__functions__exec__Ch "functions::exec::Ch" []
+        (three_words_contract {{ \(x : [32]) y z -> Ch (x, y, z) }}) rme "rme"
+        "Functions::Ch at [32]";
+maj <- verify_symbol rust__sha2__functions__exec__Maj "functions::exec::Maj" []
+         (three_words_contract {{ \(x : [32]) y z -> Maj (x, y, z) }}) rme "rme"
+         "Functions::Maj at [32]";
+
+/* --- sha2::sha256_stream::compress, for all hash values and blocks --------- */
+
+/*
+ * compress = Main.cry's `step` at SHA-256 (Main.cry:67, [FIPS-PUB-180-4
+ * Section 6.2.2]), SHA256Main::step, for every h and m:
+ *   step H M = H + foldl step3 H [0 ..< 64]
+ * with the message schedule W and the 64 rounds of step3. compress is
+ * one function: its schedule loop and its round loop are inline (as
+ * SPARK's Compress). What it calls is overridden: the four SIGMA and
+ * sigma functions, Ch and Maj, by their proofs above (the eight additions
+ * of the feed-forward are u32::wrapping_add, executed). SAW executes the
+ * 64 rounds with those calls as overrides, and z3 has the SIGMA and sigma
+ * functions uninterpreted on both sides. Ch and Maj stay interpreted:
+ * Functions.cry's take a tuple, and SAW 1.6's what4 back end cannot make
+ * an uninterpreted function of one (as SPARK found).
+ */
+let compress_unint = ["SIGMA_256_0", "SIGMA_256_1", "sigma_256_0", "sigma_256_1"];
+let compress_unint_name = "w4_unint_z3 SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1";
+compress <- verify_symbol rust__sha2__sha256_stream__compress "sha256_stream::compress"
+              [sigma_0, sigma_1, small_sigma_0, small_sigma_1, ch, maj]
+              (compress_contract {{ step }})
+              (w4_unint_z3 compress_unint) compress_unint_name
+              "SHA256Main::step (Main.cry step at SHA-256)";
+
+/* --- sha2::sha256_stream::hash, at fixed message lengths -------------------- */
+
+/*
+ * hash = Main.cry's `hash` at SHA-256 (Main.cry:55, [FIPS-PUB-180-4
+ * Sections 5 and 6.2]) on the message's bits, the digest split into
+ * bytes:
+ *   \msg -> split (hash (join msg))
+ * at each length below, with compress's proof as the override for every
+ * block, and z3 with `step` and the four sigmas uninterpreted. hash is
+ * init, one update and finalize; load_block, to_digest and those three
+ * are executed in place (doc/saw.md, "What SAW proves on its own, in
+ * place, or not at all"). The lengths reach each case of the padding:
+ * 0; 55, the longest message whose padding fits one block; 56, the
+ * shortest that needs two; 63, 64 and 65 around a whole block; 119 and
+ * 120, the same boundary in the second block; 128; 200, four blocks; 1
+ * and 100 besides (SPARK's twelve). With no symbolic input (0 bytes) SAW
+ * evaluates the overrides' `step` on constants, so the goal is the digest
+ * itself, and nothing is uninterpreted there (as SPARK found: with `step`
+ * uninterpreted that goal is not valid).
+ */
+let hash_unint = concat ["step"] compress_unint;
+let hash_unint_name = "w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1";
+let verify_hash_with (n : Int) (unint : [String]) (unint_name : String) =
+  verify_symbol rust__sha2__sha256_stream__hash
+    (str_concat (str_concat "sha256_stream::hash at " (show n)) " bytes")
+    [compress]
+    (hash_contract n {{ \(msg : [n][8]) -> split (hash (join msg)) : [32][8] }})
+    (w4_unint_z3 unint) unint_name
+    (str_concat (str_concat "\\msg -> split (SHA256Main::hash`{8 * " (show n)) "} (join msg))");
+let verify_hash (n : Int) = verify_hash_with n hash_unint hash_unint_name;
+
+hash_0   <- verify_hash_with 0 [] "z3, nothing uninterpreted (no symbolic input)";
+hash_1   <- verify_hash 1;
+hash_55  <- verify_hash 55;
+hash_56  <- verify_hash 56;
+hash_63  <- verify_hash 63;
+hash_64  <- verify_hash 64;
+hash_65  <- verify_hash 65;
+hash_100 <- verify_hash 100;
+hash_119 <- verify_hash 119;
+hash_120 <- verify_hash 120;
+hash_128 <- verify_hash 128;
+hash_200 <- verify_hash 200;
+
+/* --- hmac::sha256_impl::hmac_sha256, at fixed key and text lengths --------- */
+
+/*
+ * hmac_sha256 = packaging/Hash.cry's HMAC at SHA-256 (Hash.cry:71), that
+ * is HMAC/Main.cry's HMAC (Main.cry:40, [FIPS-PUB-198-1 Section 4]) with
+ * λ = 256, B = 64, L = 32 and Hk = Hn = HL = SHA256Main::hash, on the
+ * key's bytes and the text's bits, the MAC split into bytes:
+ *   HMAC Hk Hn HL K text =
+ *     take (HL ((K0 ^ opad) # (Hn ((K0 ^ ipad) # text))))
+ * with K0 = HMAC_init Hk K. The key lengths cover HMAC_init's three
+ * cases: 0 and 32 (shorter than the block: padded with zeros), 64 (the
+ * block: as it is), 65 and 100 (longer: hashed first, with hash's proof
+ * at that length as the override for init_key's call). The texts are
+ * short: 0, 3 and 32 bytes (SPARK's seven pairs). compress's proof is
+ * the override for every block compressed, and z3 has `step` and the
+ * sigmas uninterpreted; at (0, 0), with nothing symbolic, nothing is.
+ */
+let verify_hmac_with (k : Int) (n : Int) (overrides : [LLVMSpec]) (unint : [String]) (unint_name : String) =
+  verify_symbol rust__hmac__sha256_impl__hmac_sha256
+    (str_concat (str_concat (str_concat (str_concat "sha256_impl::hmac_sha256 at key " (show k)) " bytes, text ") (show n)) " bytes")
+    (concat [compress] overrides)
+    (hmac_contract k n {{ \(key : [k][8]) (text : [n][8]) ->
+                            split (HMAC`{256, 64, k, 8 * n, 32} hash hash hash key (join text)) : [32][8] }})
+    (w4_unint_z3 unint) unint_name
+    (str_concat (str_concat (str_concat (str_concat "\\key text -> split (HMAC::HMAC`{256, 64, " (show k)) ", 8 * ") (show n)) ", 32} SHA256Main::hash (x3) key (join text))");
+let verify_hmac (k : Int) (n : Int) (overrides : [LLVMSpec]) =
+  verify_hmac_with k n overrides hash_unint hash_unint_name;
+
+hmac_0_0    <- verify_hmac_with 0 0 [] [] "z3, nothing uninterpreted (no symbolic input)";
+hmac_32_3   <- verify_hmac 32  3  [];
+hmac_32_32  <- verify_hmac 32  32 [];
+hmac_64_3   <- verify_hmac 64  3  [];
+hmac_64_32  <- verify_hmac 64  32 [];
+hmac_65_3   <- verify_hmac 65  3  [hash_65];
+hmac_100_32 <- verify_hmac 100 32 [hash_100];

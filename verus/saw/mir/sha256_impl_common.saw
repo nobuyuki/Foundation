@@ -1,0 +1,69 @@
+/*
+ * What the SHA-256 and HMAC-SHA-256 implementation's MIR SAW scripts
+ * share: the crate's MIR, NSA's Cryptol, and the contracts (as
+ * ../llvm/sha256_impl_common.saw, in MIR's types).
+ *
+ * Run from verus/saw/mir/ by verus/scripts/check-saw.sh (see
+ * aes_impl_common.saw). Not run by CI: see verus/doc/saw.md.
+ */
+
+enable_experimental;
+
+import "../SHA256Main.cry";
+import "../../../algorithms/SHA2/Notation.cry";
+import "../../../algorithms/SHA2/Functions.cry";
+import "../../../algorithms/HMAC/Main.cry";
+
+crate <- mir_load_module "../obj/mir/foundation_verus.linked-mir.json";
+
+let rust (path : String) = str_concat "foundation_verus::" path;
+let rust_n (path : String) (n : Term) =
+  mir_find_name crate (rust path) [mir_const mir_u32 n];
+
+let word_t = mir_u32;
+let byte_t = mir_u8;
+let hash_value_t = mir_array 8 word_t;
+let block_t = mir_array 16 word_t;
+
+/*
+ * fn compress(h: &mut [u32; 8], m: &[u32; 16]).
+ */
+let compress_contract (f : Term) = do {
+  h <- mir_fresh_var "h" hash_value_t;
+  hp <- mir_alloc_mut hash_value_t;
+  mir_points_to hp (mir_term h);
+  m <- mir_fresh_var "m" block_t;
+  mp <- mir_alloc block_t;
+  mir_points_to mp (mir_term m);
+  mir_execute_func [hp, mp];
+  mir_points_to hp (mir_term {{ f h m }});
+};
+
+/*
+ * A &[u8] argument of n bytes, as a slice value of an array of n bytes.
+ */
+let byte_slice_arg (n : Int) (name : String) = do {
+  xs <- mir_fresh_var name (mir_array n byte_t);
+  p <- mir_alloc (mir_array n byte_t);
+  mir_points_to p (mir_term xs);
+  return (xs, mir_slice_value p);
+};
+
+let hash_contract (n : Int) (f : Term) = do {
+  (msg, ms) <- byte_slice_arg n "msg";
+  mir_execute_func [ms];
+  mir_return (mir_term {{ f msg }});
+};
+
+let hmac_contract (k : Int) (n : Int) (f : Term) = do {
+  (key, ks) <- byte_slice_arg k "key";
+  (text, ts) <- byte_slice_arg n "text";
+  mir_execute_func [ks, ts];
+  mir_return (mir_term {{ f key text }});
+};
+
+let verify_symbol symbol name overrides contract tactic tactic_name cryptol = do {
+  result <- time (mir_verify crate symbol overrides false contract tactic);
+  print (str_concat (str_concat (str_concat (str_concat (str_concat "RESULT proved " name) " = ") cryptol) " [") (str_concat tactic_name "]"));
+  return result;
+};

@@ -1,0 +1,43 @@
+/*
+ * The Verus crate's GF(2^^8), checked against algorithms/AES/GF28.cry
+ * through Cryptol's FFI. The counterpart of the SPARK crate's
+ * spark/cryptol/SPARK/AES/GF28.cry.
+ *
+ * The foreign functions below are the C exports of the Verus crate's FFI
+ * library (verus/ffi/, from verus/src/ffi/): verus/scripts/check-ffi.sh
+ * links that library here as GF28.so, which is where Cryptol looks for this
+ * module's foreign implementations. They have no Cryptol body on purpose:
+ * a body would be evaluated whenever the library is not loaded, and the
+ * properties would compare the Cryptol with itself.
+ *
+ * The exports are the crate's executable functions, each proved equal to
+ * the spec-layer function that transcribes the Cryptol named in its
+ * property. A Verus spec function cannot be executed, so where the SPARK
+ * crate checks its ghost spec and its implementation separately (prop_Dot
+ * and prop_Impl_Dot), this module checks the implementation, and the spec
+ * through its proof (verus/doc/ffi.md).
+ *
+ * Each property states that a Verus function equals the NSA function it
+ * mirrors, over the whole domain: check-ffi.sh runs both with :exhaust.
+ */
+module Verus::AES::GF28 where
+
+import algorithms::AES::GF28
+
+/** aes_impl::x_times, proved equal to the spec's xTimes. */
+foreign verus_x_times : [8] -> [8]
+
+/** aes_impl::dot, proved equal to the spec's dot (GF28.cry's (•)). */
+foreign verus_dot : [8] -> [8] -> [8]
+
+/** The executable x_times is GF28.cry's xTimes on every byte (256 tests). */
+prop_xTimes : [8] -> Bit
+property prop_xTimes b = verus_x_times b == xTimes b
+
+/**
+ * The executable dot is GF28.cry's (•) on every pair of bytes (65,536
+ * tests). The ciphers do not call it, so this is the only property that
+ * runs it.
+ */
+prop_Impl_Dot : [8] -> [8] -> Bit
+property prop_Impl_Dot b c = verus_dot b c == b • c
