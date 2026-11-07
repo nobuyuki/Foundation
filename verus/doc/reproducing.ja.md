@@ -118,5 +118,5 @@ SPARK の crate の bitcode は GNAT Pro 27 の LLVM バックエンドから作
 ### 手順
 
 省略。上の「手順」にある。
-記録した実行（`saw/results.txt`）は、16 CPU の x86_64 のデスクトップで 932 秒かかった。
-`llvm/aes_impl.saw` が 10 秒、`llvm/sha256_impl.saw` が 31 秒、`mir/aes_impl.saw` が 21 秒、`mir/sha256_impl.saw` が 161 秒で、残りはビルドと陰性対照である。
+記録した実行（`saw/results.txt`、`d59a3f0` で）は、16 CPU の x86_64 のデスクトップで 928 秒かかった。
+`llvm/aes_impl.saw` が 11 秒、`llvm/sha256_impl.saw` が 30 秒、`mir/aes_impl.saw` が 20 秒、`mir/sha256_impl.saw` が 159 秒で、残りはビルドと陰性対照である。

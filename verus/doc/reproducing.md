@@ -135,7 +135,7 @@ Omitted: in the table above.
 
 ### Steps
 
-Omitted: in "Steps" above. The recorded run (`saw/results.txt`) took 932 s on a 16-CPU x86_64 desktop: 10 s for
-`llvm/aes_impl.saw`, 31 s for `llvm/sha256_impl.saw`, 21 s for
-`mir/aes_impl.saw` and 161 s for `mir/sha256_impl.saw`, the rest building
+Omitted: in "Steps" above. The recorded run (`saw/results.txt`, at `d59a3f0`) took 928 s on a 16-CPU x86_64 desktop: 11 s for
+`llvm/aes_impl.saw`, 30 s for `llvm/sha256_impl.saw`, 20 s for
+`mir/aes_impl.saw` and 159 s for `mir/sha256_impl.saw`, the rest building
 and the negative controls.

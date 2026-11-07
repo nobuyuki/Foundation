@@ -70,7 +70,7 @@ side:
 ## What is proved
 
 * **Every function Verus checks is verified**: 326 verified, 0 errors
-  (`cargo verus verify`), in about 14 s on a 16-CPU desktop.
+  (`cargo verus verify`) at `d59a3f0`, in about 14 s on a 16-CPU desktop.
   No function raises Verus's resource limit, and no proof is slow
   ([doc/proving.md](doc/proving.md)).
 * **Nothing is assumed.** There is no `assume`, `admit`, `axiom fn`,
@@ -89,7 +89,7 @@ side:
   layer, once for all key sizes.
 * **SAW**: 84 results on each route (LLVM bitcode and MIR: AES 46,
   SHA-256 and HMAC 38), with 8 negative controls on each that fail as they
-  must (`saw/results.txt`). AES at k = 128, 192 and 256;
+  must (`saw/results.txt`, at `d59a3f0`). AES at k = 128, 192 and 256;
   SHA-256's compression function for every input; hashing at twelve
   lengths and HMAC at seven (key, text) pairs, chosen at the padding
   boundaries. Details and what SAW leaves out: [doc/saw.md](doc/saw.md).

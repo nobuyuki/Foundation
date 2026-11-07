@@ -6,8 +6,8 @@
 # lines "proved mir"). Local only, never run by CI: this record is the
 # provenance of the result. doc/saw.md.
 
-commit      33f33fd7f0c60f98a17c5039d709f27bf5b0def5
-date        2026-11-01T14:53:33Z
+commit      d59a3f0d5ef0ec200e62a6c757057e2a42d648f2
+date        2026-11-07T09:09:04Z
 host        x86_64, 16 CPUs
 rustc       1.98.1 (48a229cea), LLVM 22.1.8
 cargo       cargo 1.98.1 (797e8a9bc 2026-08-05)
@@ -20,7 +20,7 @@ switches    llvm: cargo rustc --lib (dev profile: -O0, overflow checks, debug as
 bitcode     b15095bb2ef75202a73d2ae5bd15e3b0ebe220e341e90cd24fb71ef569508012 saw/obj/foundation_verus.bc (196 functions, 75 of the crate bound in symbols.saw)
 mir-json    mir-json 0.1.0 (JSON schema version 13), commit 8cbf9af1821075ef47cf784fef78d2650827730d, toolchain nightly-2026-03-21: rustc 1.96.0-nightly (ac7f9ec7d 2026-03-20)
 switches    mir: cargo saw-build --lib (cargo test's build, dev profile: -O0, overflow checks, debug assertions, cfg(test))
-mir         42d2268357d42845850ae50adec8053b0007a932b2f0513ae8620459e931dc9a saw/obj/mir/foundation_verus.linked-mir.json (187 names of the crate)
+mir         a595541b25215190035b31c9eb42a02dd2dbfa0db65fa1636b53a8bf32cfb9bb saw/obj/mir/foundation_verus.linked-mir.json (187 names of the crate)
 source      181460ceac4f019564c4fd060dd75d884650b58244d62e2e5e75b856686dab0d src/aes/aes_impl.rs
 source      da78d8de28c74ebdbebb7b7936c269fac56ab2bc45c25a18ef091921c806345b src/aes/aes_impl/main.rs
 source      23757595a7d8c0d56fc26ed6a16d0727fd91bcf259104f6538f4d29bf1fc7695 src/aes/cipher.rs
@@ -31,16 +31,16 @@ source      ef67cc0eee9527f8057609857f7a3f5dafaf062a554f833c380cd717f937b8f6 src
 source      cb9115957e0bfa0b0e602f4d2f0e19408a236b693720b82adef03566a0cf09d7 src/aes/main.rs
 source      00fc4c06b6cc217dddc68e8bdd89a96e9cdf2a83242d8d842d7ff865bf30fdab src/aes/main_lemmas.rs
 source      a629312722d3b92d09c42b4c90e6a94ba7c48bfbd530d0481c5ae430a40bd860 src/aes/mod.rs
-source      5ab99885143ca182a2a3310330d9011156b2894fa0be920f3be7935014b90e6b src/aes/properties.rs
+source      2d2b06c9da80bdf6a2da9af6b77a28a25c84a54c1eb092bb8dcb2de6a84755f6 src/aes/properties.rs
 source      0eaf01c2689817fe3e65558023d6cd228f09252cc7bf059885e0484cdfcc85b7 src/aes/sbox.rs
-source      619e5872fb3eb45b4d2b614e8d135bc06541ac75f294708992028a1a2ea04e55 src/aes/sbox_entries.rs
+source      e6f432977162447ac1faada81da0dd44839beab76fb1aceef199505b8c911eaf src/aes/sbox_entries.rs
 source      e41084866afa9f08fe07835ef0852437643a4a33a3951de0b02bd0dc68189bc4 src/aes/types.rs
 source      5265c5fc428ab87889018b8a9b98e01e8c737afabf682580b6f33504929fad42 src/cryptol/bit_sequences.rs
 source      487b9ab09970e0443a637eadd32a1d75e7e0b9dcb85f8eeb3bbd6b4013196197 src/cryptol/bulk_indexing.rs
 source      2245009186a2f860f59f5398675c4dd38d9d2eece4fee47b3f67336876a649c4 src/cryptol/enumeration_folds.rs
 source      7ddf9f849ca9589d6e2879a77116b3ed350bc404e380525a24c7aaaa5107b8ed src/cryptol/folds.rs
 source      e7847bb2e7424439e172481d225d11930a9e38abb688ea92750bba57453c5cce src/cryptol/join_split.rs
-source      fab39196286294abca20f4c3b4e48499c530bd26ca384e7600eccc0b8a0bfd9e src/cryptol/mod.rs
+source      89341b31f00e08c9fa27d8a6ceaf322f23560132ab97f289502b8e0f42c40db4 src/cryptol/mod.rs
 source      45e4f85f1b884c33169ee4a75ca9b3c391dd3737ee2e4e0cf566a024f725c712 src/cryptol/numeric.rs
 source      d9fedf57a89ec60c286e1df362dd0f4a3a3ded80abd09b51fc8f56f33e4183b2 src/cryptol/polynomial_products.rs
 source      26fdbc9be5fb382fa24a8473cfc64289d2c19af65e077f15ea7b1d292c96d739 src/cryptol/polynomial_quotients.rs
@@ -85,7 +85,7 @@ cryptol     e0f507136dbe9bcc0a38c5a8e76b1b6a80626c0c3cd392c3d3fa305d30278867 alg
 cryptol     953df0b7fea1ef5f7252d9860a17b925ebfc5a675042ad873f49a0ce1fdbd01e algorithms/SHA2/Preprocessing.cry
 cryptol     b853e76b721f5abe70e0764c2b1548b6fc37d85bb05cd10d95b285f19a4f4cbe algorithms/HMAC/Main.cry
 cryptol     44e8b6904192fdda022b6e3454f6239102f376c979fb76390e5e6fa62754e67f verus/saw/SHA256Main.cry (ours)
-proved      llvm llvm_verify: x_times = GF28::xTimes [rme], 0.07 s
+proved      llvm llvm_verify: x_times = GF28::xTimes [rme], 0.08 s
 proved      llvm llvm_verify: dot = GF28::(•) [rme], 0.03 s
 proved      llvm llvm_verify: sub_byte = \b -> SBox::SBox @ b [rme], 0.08 s
 proved      llvm llvm_verify: inv_sub_byte = \b -> SBox::InvSBox @ b [rme], 0.08 s
@@ -93,43 +93,43 @@ proved      llvm llvm_verify: sub_bytes = Cipher::SubBytes [rme], 0.04 s
 proved      llvm llvm_verify: inv_sub_bytes = Cipher::InvSubBytes [rme], 0.04 s
 proved      llvm llvm_verify: shift_rows = Cipher::ShiftRows [rme], 0.03 s
 proved      llvm llvm_verify: inv_shift_rows = Cipher::InvShiftRows [rme], 0.03 s
-proved      llvm llvm_verify: add_round_key = Cipher::AddRoundKey [rme], 0.07 s
+proved      llvm llvm_verify: add_round_key = Cipher::AddRoundKey [rme], 0.08 s
 proved      llvm llvm_verify: mix_column = Cipher::MixColumnsStep [rme], 0.06 s
 proved      llvm llvm_verify: inv_mix_byte = \a b c d -> Cipher::InvMixColumnsStep [a, b, c, d] @ 0 [rme], 0.03 s
 proved      llvm llvm_verify: inv_mix_column = Cipher::InvMixColumnsStep [rme], 0.06 s
 proved      llvm llvm_verify: column = \s j -> (split s : [4]AESWord) @ j [z3], 0.36 s
-proved      llvm llvm_verify: mix_columns = Cipher::MixColumns [rme], 0.06 s
+proved      llvm llvm_verify: mix_columns = Cipher::MixColumns [rme], 0.05 s
 proved      llvm llvm_verify: inv_mix_columns = Cipher::InvMixColumns [rme], 0.07 s
 proved      llvm llvm_verify: round = Cipher::Round [rme], 0.06 s
-proved      llvm llvm_verify: inv_round = Cipher::InvRound [rme], 0.14 s
+proved      llvm llvm_verify: inv_round = Cipher::InvRound [rme], 0.13 s
 proved      llvm llvm_verify: inv_round_prime = Cipher::InvRound' [w4_unint_z3 InvShiftRows InvSubBytes AddRoundKey InvMixColumns], 0.10 s
 proved      llvm llvm_verify: sub_word = KeyExpansion::SubWord [rme], 0.06 s
-proved      llvm llvm_verify: rot_word = KeyExpansion::RotWord [rme], 0.06 s
-proved      llvm llvm_verify: xor_word = \a b -> a ^ b [rme], 0.08 s
+proved      llvm llvm_verify: rot_word = KeyExpansion::RotWord [rme], 0.05 s
+proved      llvm llvm_verify: xor_word = \a b -> a ^ b [rme], 0.07 s
 proved      llvm llvm_verify: rcon = \i -> (drop`{1} KeyExpansion::Rcon) @ (i - 1), which is Rcon @ i for 1 <= i <= 10 [z3], 0.09 s
 proved      llvm llvm_verify: expand_key at k = 128, key words: 4 = KeyExpansion::KeyExpansion`{128} [w4_unint_z3 SubWord], 0.38 s
-proved      llvm llvm_verify: expand_key at k = 192, key words: 6 = KeyExpansion::KeyExpansion`{192} [w4_unint_z3 SubWord], 0.46 s
-proved      llvm llvm_verify: expand_key at k = 256, key words: 8 = KeyExpansion::KeyExpansion`{256} [w4_unint_z3 SubWord], 0.53 s
-proved      llvm llvm_verify: expand_key at k = 128, key words: 8 = KeyExpansion::KeyExpansion`{128} [w4_unint_z3 SubWord], 0.36 s
-proved      llvm llvm_verify: expand_key at k = 192, key words: 8 = KeyExpansion::KeyExpansion`{192} [w4_unint_z3 SubWord], 0.44 s
-proved      llvm llvm_verify: encrypt_block at k = 128, round keys: 11 = Cipher::Cipher`{128} [w4_unint_z3 Round SubBytes ShiftRows AddRoundKey], 0.20 s
+proved      llvm llvm_verify: expand_key at k = 192, key words: 6 = KeyExpansion::KeyExpansion`{192} [w4_unint_z3 SubWord], 0.45 s
+proved      llvm llvm_verify: expand_key at k = 256, key words: 8 = KeyExpansion::KeyExpansion`{256} [w4_unint_z3 SubWord], 0.54 s
+proved      llvm llvm_verify: expand_key at k = 128, key words: 8 = KeyExpansion::KeyExpansion`{128} [w4_unint_z3 SubWord], 0.37 s
+proved      llvm llvm_verify: expand_key at k = 192, key words: 8 = KeyExpansion::KeyExpansion`{192} [w4_unint_z3 SubWord], 0.47 s
+proved      llvm llvm_verify: encrypt_block at k = 128, round keys: 11 = Cipher::Cipher`{128} [w4_unint_z3 Round SubBytes ShiftRows AddRoundKey], 0.19 s
 proved      llvm llvm_verify: encrypt_block at k = 192, round keys: 13 = Cipher::Cipher`{192} [w4_unint_z3 Round SubBytes ShiftRows AddRoundKey], 0.21 s
 proved      llvm llvm_verify: encrypt_block at k = 256, round keys: 15 = Cipher::Cipher`{256} [w4_unint_z3 Round SubBytes ShiftRows AddRoundKey], 0.26 s
 proved      llvm llvm_verify: encrypt_block at k = 128, round keys: 15 = Cipher::Cipher`{128} [w4_unint_z3 Round SubBytes ShiftRows AddRoundKey], 0.20 s
-proved      llvm llvm_verify: encrypt_block at k = 192, round keys: 15 = Cipher::Cipher`{192} [w4_unint_z3 Round SubBytes ShiftRows AddRoundKey], 0.21 s
+proved      llvm llvm_verify: encrypt_block at k = 192, round keys: 15 = Cipher::Cipher`{192} [w4_unint_z3 Round SubBytes ShiftRows AddRoundKey], 0.20 s
 proved      llvm llvm_verify: decrypt_block at k = 128, round keys: 11 = Cipher::InvCipher`{128} [w4_unint_z3 InvRound InvSubBytes InvShiftRows AddRoundKey], 0.20 s
 proved      llvm llvm_verify: decrypt_block at k = 192, round keys: 13 = Cipher::InvCipher`{192} [w4_unint_z3 InvRound InvSubBytes InvShiftRows AddRoundKey], 0.21 s
 proved      llvm llvm_verify: decrypt_block at k = 256, round keys: 15 = Cipher::InvCipher`{256} [w4_unint_z3 InvRound InvSubBytes InvShiftRows AddRoundKey], 0.26 s
 proved      llvm llvm_verify: decrypt_block at k = 128, round keys: 15 = Cipher::InvCipher`{128} [w4_unint_z3 InvRound InvSubBytes InvShiftRows AddRoundKey], 0.20 s
 proved      llvm llvm_verify: decrypt_block at k = 192, round keys: 15 = Cipher::InvCipher`{192} [w4_unint_z3 InvRound InvSubBytes InvShiftRows AddRoundKey], 0.21 s
 proved      llvm llvm_verify: decrypt_block_prime at k = 128, round keys: 11 = Cipher::InvCipher'`{128} [w4_unint_z3 InvRound' InvSubBytes InvShiftRows InvMixColumns AddRoundKey], 0.21 s
-proved      llvm llvm_verify: decrypt_block_prime at k = 192, round keys: 13 = Cipher::InvCipher'`{192} [w4_unint_z3 InvRound' InvSubBytes InvShiftRows InvMixColumns AddRoundKey], 0.23 s
-proved      llvm llvm_verify: decrypt_block_prime at k = 256, round keys: 15 = Cipher::InvCipher'`{256} [w4_unint_z3 InvRound' InvSubBytes InvShiftRows InvMixColumns AddRoundKey], 0.28 s
+proved      llvm llvm_verify: decrypt_block_prime at k = 192, round keys: 13 = Cipher::InvCipher'`{192} [w4_unint_z3 InvRound' InvSubBytes InvShiftRows InvMixColumns AddRoundKey], 0.22 s
+proved      llvm llvm_verify: decrypt_block_prime at k = 256, round keys: 15 = Cipher::InvCipher'`{256} [w4_unint_z3 InvRound' InvSubBytes InvShiftRows InvMixColumns AddRoundKey], 0.27 s
 proved      llvm llvm_verify: main::encrypt at k = 128 = Main::AES`{128}.Encrypt [w4_unint_z3 KeyExpansion Cipher], 0.29 s
-proved      llvm llvm_verify: main::encrypt at k = 192 = Main::AES`{192}.Encrypt [w4_unint_z3 KeyExpansion Cipher], 0.36 s
+proved      llvm llvm_verify: main::encrypt at k = 192 = Main::AES`{192}.Encrypt [w4_unint_z3 KeyExpansion Cipher], 0.35 s
 proved      llvm llvm_verify: main::encrypt at k = 256 = Main::AES`{256}.Encrypt [w4_unint_z3 KeyExpansion Cipher], 0.46 s
 proved      llvm llvm_verify: main::decrypt at k = 128 = Main::AES`{128}.Decrypt [w4_unint_z3 KeyExpansion InvCipher], 0.29 s
-proved      llvm llvm_verify: main::decrypt at k = 192 = Main::AES`{192}.Decrypt [w4_unint_z3 KeyExpansion InvCipher], 0.31 s
+proved      llvm llvm_verify: main::decrypt at k = 192 = Main::AES`{192}.Decrypt [w4_unint_z3 KeyExpansion InvCipher], 0.30 s
 proved      llvm llvm_verify: main::decrypt at k = 256 = Main::AES`{256}.Decrypt [w4_unint_z3 KeyExpansion InvCipher], 0.46 s
 proved      llvm llvm_verify: notation::exec::ROTR::<2> = Notation::ROTR`{2, 32} [rme], 0.03 s
 proved      llvm llvm_verify: notation::exec::ROTR::<13> = Notation::ROTR`{13, 32} [rme], 0.02 s
@@ -139,134 +139,134 @@ proved      llvm llvm_verify: notation::exec::ROTR::<11> = Notation::ROTR`{11, 3
 proved      llvm llvm_verify: notation::exec::ROTR::<25> = Notation::ROTR`{25, 32} [rme], 0.02 s
 proved      llvm llvm_verify: notation::exec::ROTR::<7> = Notation::ROTR`{7, 32} [rme], 0.02 s
 proved      llvm llvm_verify: notation::exec::ROTR::<18> = Notation::ROTR`{18, 32} [rme], 0.02 s
-proved      llvm llvm_verify: notation::exec::ROTR::<17> = Notation::ROTR`{17, 32} [rme], 0.07 s
+proved      llvm llvm_verify: notation::exec::ROTR::<17> = Notation::ROTR`{17, 32} [rme], 0.06 s
 proved      llvm llvm_verify: notation::exec::ROTR::<19> = Notation::ROTR`{19, 32} [rme], 0.02 s
 proved      llvm llvm_verify: notation::exec::SHR::<3> = Notation::SHR`{3, 32} [rme], 0.02 s
 proved      llvm llvm_verify: notation::exec::SHR::<10> = Notation::SHR`{10, 32} [rme], 0.02 s
 proved      llvm llvm_verify: functions::exec::SIGMA_256_0 = Functions::SIGMA_256_0 [rme], 0.02 s
 proved      llvm llvm_verify: functions::exec::SIGMA_256_1 = Functions::SIGMA_256_1 [rme], 0.02 s
 proved      llvm llvm_verify: functions::exec::sigma_256_0 = Functions::sigma_256_0 [rme], 0.02 s
-proved      llvm llvm_verify: functions::exec::sigma_256_1 = Functions::sigma_256_1 [rme], 0.03 s
+proved      llvm llvm_verify: functions::exec::sigma_256_1 = Functions::sigma_256_1 [rme], 0.02 s
 proved      llvm llvm_verify: functions::exec::Ch = Functions::Ch at [32] [rme], 0.02 s
 proved      llvm llvm_verify: functions::exec::Maj = Functions::Maj at [32] [rme], 0.02 s
-proved      llvm llvm_verify: sha256_stream::compress = SHA256Main::step (Main.cry step at SHA-256) [w4_unint_z3 SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 3.29 s
-proved      llvm llvm_verify: sha256_stream::hash at 0 bytes = \msg -> split (SHA256Main::hash`{8 * 0} (join msg)) [z3, nothing uninterpreted (no symbolic input)], 2.85 s
+proved      llvm llvm_verify: sha256_stream::compress = SHA256Main::step (Main.cry step at SHA-256) [w4_unint_z3 SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 2.70 s
+proved      llvm llvm_verify: sha256_stream::hash at 0 bytes = \msg -> split (SHA256Main::hash`{8 * 0} (join msg)) [z3, nothing uninterpreted (no symbolic input)], 2.88 s
 proved      llvm llvm_verify: sha256_stream::hash at 1 bytes = \msg -> split (SHA256Main::hash`{8 * 1} (join msg)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 0.22 s
 proved      llvm llvm_verify: sha256_stream::hash at 55 bytes = \msg -> split (SHA256Main::hash`{8 * 55} (join msg)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 0.30 s
 proved      llvm llvm_verify: sha256_stream::hash at 56 bytes = \msg -> split (SHA256Main::hash`{8 * 56} (join msg)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 0.39 s
 proved      llvm llvm_verify: sha256_stream::hash at 63 bytes = \msg -> split (SHA256Main::hash`{8 * 63} (join msg)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 0.45 s
 proved      llvm llvm_verify: sha256_stream::hash at 64 bytes = \msg -> split (SHA256Main::hash`{8 * 64} (join msg)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 0.47 s
-proved      llvm llvm_verify: sha256_stream::hash at 65 bytes = \msg -> split (SHA256Main::hash`{8 * 65} (join msg)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 0.42 s
+proved      llvm llvm_verify: sha256_stream::hash at 65 bytes = \msg -> split (SHA256Main::hash`{8 * 65} (join msg)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 0.47 s
 proved      llvm llvm_verify: sha256_stream::hash at 100 bytes = \msg -> split (SHA256Main::hash`{8 * 100} (join msg)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 0.51 s
 proved      llvm llvm_verify: sha256_stream::hash at 119 bytes = \msg -> split (SHA256Main::hash`{8 * 119} (join msg)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 0.48 s
-proved      llvm llvm_verify: sha256_stream::hash at 120 bytes = \msg -> split (SHA256Main::hash`{8 * 120} (join msg)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 0.57 s
+proved      llvm llvm_verify: sha256_stream::hash at 120 bytes = \msg -> split (SHA256Main::hash`{8 * 120} (join msg)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 0.62 s
 proved      llvm llvm_verify: sha256_stream::hash at 128 bytes = \msg -> split (SHA256Main::hash`{8 * 128} (join msg)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 0.70 s
-proved      llvm llvm_verify: sha256_stream::hash at 200 bytes = \msg -> split (SHA256Main::hash`{8 * 200} (join msg)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 1.00 s
-proved      llvm llvm_verify: sha256_impl::hmac_sha256 at key 0 bytes, text 0 bytes = \key text -> split (HMAC::HMAC`{256, 64, 0, 8 * 0, 32} SHA256Main::hash (x3) key (join text)) [z3, nothing uninterpreted (no symbolic input)], 11.13 s
-proved      llvm llvm_verify: sha256_impl::hmac_sha256 at key 32 bytes, text 3 bytes = \key text -> split (HMAC::HMAC`{256, 64, 32, 8 * 3, 32} SHA256Main::hash (x3) key (join text)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 0.68 s
-proved      llvm llvm_verify: sha256_impl::hmac_sha256 at key 32 bytes, text 32 bytes = \key text -> split (HMAC::HMAC`{256, 64, 32, 8 * 32, 32} SHA256Main::hash (x3) key (join text)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 0.75 s
-proved      llvm llvm_verify: sha256_impl::hmac_sha256 at key 64 bytes, text 3 bytes = \key text -> split (HMAC::HMAC`{256, 64, 64, 8 * 3, 32} SHA256Main::hash (x3) key (join text)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 1.62 s
-proved      llvm llvm_verify: sha256_impl::hmac_sha256 at key 64 bytes, text 32 bytes = \key text -> split (HMAC::HMAC`{256, 64, 64, 8 * 32, 32} SHA256Main::hash (x3) key (join text)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 1.39 s
-proved      llvm llvm_verify: sha256_impl::hmac_sha256 at key 65 bytes, text 3 bytes = \key text -> split (HMAC::HMAC`{256, 64, 65, 8 * 3, 32} SHA256Main::hash (x3) key (join text)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 0.89 s
-proved      llvm llvm_verify: sha256_impl::hmac_sha256 at key 100 bytes, text 32 bytes = \key text -> split (HMAC::HMAC`{256, 64, 100, 8 * 32, 32} SHA256Main::hash (x3) key (join text)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 1.01 s
-proved      mir mir_verify: x_times = GF28::xTimes [rme], 0.40 s
-proved      mir mir_verify: dot = GF28::(•) [rme], 0.71 s
-proved      mir mir_verify: sub_byte = \b -> SBox::SBox @ b [rme], 0.33 s
-proved      mir mir_verify: inv_sub_byte = \b -> SBox::InvSBox @ b [rme], 0.33 s
-proved      mir mir_verify: sub_bytes = Cipher::SubBytes [rme], 0.32 s
-proved      mir mir_verify: inv_sub_bytes = Cipher::InvSubBytes [rme], 0.31 s
-proved      mir mir_verify: shift_rows = Cipher::ShiftRows [rme], 0.32 s
-proved      mir mir_verify: inv_shift_rows = Cipher::InvShiftRows [rme], 0.29 s
-proved      mir mir_verify: add_round_key = Cipher::AddRoundKey [rme], 0.28 s
-proved      mir mir_verify: mix_column = Cipher::MixColumnsStep [rme], 0.32 s
-proved      mir mir_verify: inv_mix_byte = \a b c d -> Cipher::InvMixColumnsStep [a, b, c, d] @ 0 [rme], 0.30 s
+proved      llvm llvm_verify: sha256_stream::hash at 200 bytes = \msg -> split (SHA256Main::hash`{8 * 200} (join msg)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 1.01 s
+proved      llvm llvm_verify: sha256_impl::hmac_sha256 at key 0 bytes, text 0 bytes = \key text -> split (HMAC::HMAC`{256, 64, 0, 8 * 0, 32} SHA256Main::hash (x3) key (join text)) [z3, nothing uninterpreted (no symbolic input)], 11.16 s
+proved      llvm llvm_verify: sha256_impl::hmac_sha256 at key 32 bytes, text 3 bytes = \key text -> split (HMAC::HMAC`{256, 64, 32, 8 * 3, 32} SHA256Main::hash (x3) key (join text)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 0.69 s
+proved      llvm llvm_verify: sha256_impl::hmac_sha256 at key 32 bytes, text 32 bytes = \key text -> split (HMAC::HMAC`{256, 64, 32, 8 * 32, 32} SHA256Main::hash (x3) key (join text)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 0.73 s
+proved      llvm llvm_verify: sha256_impl::hmac_sha256 at key 64 bytes, text 3 bytes = \key text -> split (HMAC::HMAC`{256, 64, 64, 8 * 3, 32} SHA256Main::hash (x3) key (join text)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 1.60 s
+proved      llvm llvm_verify: sha256_impl::hmac_sha256 at key 64 bytes, text 32 bytes = \key text -> split (HMAC::HMAC`{256, 64, 64, 8 * 32, 32} SHA256Main::hash (x3) key (join text)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 1.38 s
+proved      llvm llvm_verify: sha256_impl::hmac_sha256 at key 65 bytes, text 3 bytes = \key text -> split (HMAC::HMAC`{256, 64, 65, 8 * 3, 32} SHA256Main::hash (x3) key (join text)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 0.86 s
+proved      llvm llvm_verify: sha256_impl::hmac_sha256 at key 100 bytes, text 32 bytes = \key text -> split (HMAC::HMAC`{256, 64, 100, 8 * 32, 32} SHA256Main::hash (x3) key (join text)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 0.99 s
+proved      mir mir_verify: x_times = GF28::xTimes [rme], 0.39 s
+proved      mir mir_verify: dot = GF28::(•) [rme], 0.67 s
+proved      mir mir_verify: sub_byte = \b -> SBox::SBox @ b [rme], 0.32 s
+proved      mir mir_verify: inv_sub_byte = \b -> SBox::InvSBox @ b [rme], 0.36 s
+proved      mir mir_verify: sub_bytes = Cipher::SubBytes [rme], 0.29 s
+proved      mir mir_verify: inv_sub_bytes = Cipher::InvSubBytes [rme], 0.29 s
+proved      mir mir_verify: shift_rows = Cipher::ShiftRows [rme], 0.30 s
+proved      mir mir_verify: inv_shift_rows = Cipher::InvShiftRows [rme], 0.28 s
+proved      mir mir_verify: add_round_key = Cipher::AddRoundKey [rme], 0.30 s
+proved      mir mir_verify: mix_column = Cipher::MixColumnsStep [rme], 0.28 s
+proved      mir mir_verify: inv_mix_byte = \a b c d -> Cipher::InvMixColumnsStep [a, b, c, d] @ 0 [rme], 0.28 s
 proved      mir mir_verify: inv_mix_column = Cipher::InvMixColumnsStep [rme], 0.32 s
 proved      mir mir_verify: column = \s j -> (split s : [4]AESWord) @ j [z3], 0.50 s
-proved      mir mir_verify: mix_columns = Cipher::MixColumns [rme], 0.33 s
-proved      mir mir_verify: inv_mix_columns = Cipher::InvMixColumns [rme], 0.34 s
-proved      mir mir_verify: round = Cipher::Round [rme], 0.32 s
+proved      mir mir_verify: mix_columns = Cipher::MixColumns [rme], 0.34 s
+proved      mir mir_verify: inv_mix_columns = Cipher::InvMixColumns [rme], 0.33 s
+proved      mir mir_verify: round = Cipher::Round [rme], 0.31 s
 proved      mir mir_verify: inv_round = Cipher::InvRound [rme], 0.37 s
 proved      mir mir_verify: inv_round_prime = Cipher::InvRound' [w4_unint_z3 InvShiftRows InvSubBytes AddRoundKey InvMixColumns], 0.35 s
-proved      mir mir_verify: sub_word = KeyExpansion::SubWord [rme], 0.31 s
-proved      mir mir_verify: rot_word = KeyExpansion::RotWord [rme], 0.28 s
-proved      mir mir_verify: xor_word = \a b -> a ^ b [rme], 0.31 s
-proved      mir mir_verify: rcon = \i -> (drop`{1} KeyExpansion::Rcon) @ (i - 1), which is Rcon @ i for 1 <= i <= 10 [z3], 0.45 s
-proved      mir mir_verify: expand_key at k = 128, key words: 4 = KeyExpansion::KeyExpansion`{128} [w4_unint_z3 SubWord], 0.55 s
-proved      mir mir_verify: expand_key at k = 192, key words: 6 = KeyExpansion::KeyExpansion`{192} [w4_unint_z3 SubWord], 0.52 s
+proved      mir mir_verify: sub_word = KeyExpansion::SubWord [rme], 0.32 s
+proved      mir mir_verify: rot_word = KeyExpansion::RotWord [rme], 0.29 s
+proved      mir mir_verify: xor_word = \a b -> a ^ b [rme], 0.27 s
+proved      mir mir_verify: rcon = \i -> (drop`{1} KeyExpansion::Rcon) @ (i - 1), which is Rcon @ i for 1 <= i <= 10 [z3], 0.46 s
+proved      mir mir_verify: expand_key at k = 128, key words: 4 = KeyExpansion::KeyExpansion`{128} [w4_unint_z3 SubWord], 0.50 s
+proved      mir mir_verify: expand_key at k = 192, key words: 6 = KeyExpansion::KeyExpansion`{192} [w4_unint_z3 SubWord], 0.48 s
 proved      mir mir_verify: expand_key at k = 256, key words: 8 = KeyExpansion::KeyExpansion`{256} [w4_unint_z3 SubWord], 0.60 s
-proved      mir mir_verify: expand_key at k = 128, key words: 8 = KeyExpansion::KeyExpansion`{128} [w4_unint_z3 SubWord], 0.48 s
-proved      mir mir_verify: expand_key at k = 192, key words: 8 = KeyExpansion::KeyExpansion`{192} [w4_unint_z3 SubWord], 0.52 s
-proved      mir mir_verify: encrypt_block at k = 128, round keys: 11 = Cipher::Cipher`{128} [w4_unint_z3 Round SubBytes ShiftRows AddRoundKey], 0.40 s
-proved      mir mir_verify: encrypt_block at k = 192, round keys: 13 = Cipher::Cipher`{192} [w4_unint_z3 Round SubBytes ShiftRows AddRoundKey], 0.42 s
-proved      mir mir_verify: encrypt_block at k = 256, round keys: 15 = Cipher::Cipher`{256} [w4_unint_z3 Round SubBytes ShiftRows AddRoundKey], 0.43 s
-proved      mir mir_verify: encrypt_block at k = 128, round keys: 15 = Cipher::Cipher`{128} [w4_unint_z3 Round SubBytes ShiftRows AddRoundKey], 0.42 s
-proved      mir mir_verify: encrypt_block at k = 192, round keys: 15 = Cipher::Cipher`{192} [w4_unint_z3 Round SubBytes ShiftRows AddRoundKey], 0.42 s
-proved      mir mir_verify: decrypt_block at k = 128, round keys: 11 = Cipher::InvCipher`{128} [w4_unint_z3 InvRound InvSubBytes InvShiftRows AddRoundKey], 0.40 s
-proved      mir mir_verify: decrypt_block at k = 192, round keys: 13 = Cipher::InvCipher`{192} [w4_unint_z3 InvRound InvSubBytes InvShiftRows AddRoundKey], 0.45 s
-proved      mir mir_verify: decrypt_block at k = 256, round keys: 15 = Cipher::InvCipher`{256} [w4_unint_z3 InvRound InvSubBytes InvShiftRows AddRoundKey], 0.45 s
-proved      mir mir_verify: decrypt_block at k = 128, round keys: 15 = Cipher::InvCipher`{128} [w4_unint_z3 InvRound InvSubBytes InvShiftRows AddRoundKey], 0.40 s
-proved      mir mir_verify: decrypt_block at k = 192, round keys: 15 = Cipher::InvCipher`{192} [w4_unint_z3 InvRound InvSubBytes InvShiftRows AddRoundKey], 0.40 s
-proved      mir mir_verify: decrypt_block_prime at k = 128, round keys: 11 = Cipher::InvCipher'`{128} [w4_unint_z3 InvRound' InvSubBytes InvShiftRows InvMixColumns AddRoundKey], 0.43 s
-proved      mir mir_verify: decrypt_block_prime at k = 192, round keys: 13 = Cipher::InvCipher'`{192} [w4_unint_z3 InvRound' InvSubBytes InvShiftRows InvMixColumns AddRoundKey], 0.42 s
-proved      mir mir_verify: decrypt_block_prime at k = 256, round keys: 15 = Cipher::InvCipher'`{256} [w4_unint_z3 InvRound' InvSubBytes InvShiftRows InvMixColumns AddRoundKey], 0.47 s
-proved      mir mir_verify: main::encrypt at k = 128 = Main::AES`{128}.Encrypt [w4_unint_z3 KeyExpansion Cipher], 0.44 s
-proved      mir mir_verify: main::encrypt at k = 192 = Main::AES`{192}.Encrypt [w4_unint_z3 KeyExpansion Cipher], 0.42 s
-proved      mir mir_verify: main::encrypt at k = 256 = Main::AES`{256}.Encrypt [w4_unint_z3 KeyExpansion Cipher], 0.50 s
-proved      mir mir_verify: main::decrypt at k = 128 = Main::AES`{128}.Decrypt [w4_unint_z3 KeyExpansion InvCipher], 0.45 s
+proved      mir mir_verify: expand_key at k = 128, key words: 8 = KeyExpansion::KeyExpansion`{128} [w4_unint_z3 SubWord], 0.51 s
+proved      mir mir_verify: expand_key at k = 192, key words: 8 = KeyExpansion::KeyExpansion`{192} [w4_unint_z3 SubWord], 0.49 s
+proved      mir mir_verify: encrypt_block at k = 128, round keys: 11 = Cipher::Cipher`{128} [w4_unint_z3 Round SubBytes ShiftRows AddRoundKey], 0.41 s
+proved      mir mir_verify: encrypt_block at k = 192, round keys: 13 = Cipher::Cipher`{192} [w4_unint_z3 Round SubBytes ShiftRows AddRoundKey], 0.40 s
+proved      mir mir_verify: encrypt_block at k = 256, round keys: 15 = Cipher::Cipher`{256} [w4_unint_z3 Round SubBytes ShiftRows AddRoundKey], 0.42 s
+proved      mir mir_verify: encrypt_block at k = 128, round keys: 15 = Cipher::Cipher`{128} [w4_unint_z3 Round SubBytes ShiftRows AddRoundKey], 0.41 s
+proved      mir mir_verify: encrypt_block at k = 192, round keys: 15 = Cipher::Cipher`{192} [w4_unint_z3 Round SubBytes ShiftRows AddRoundKey], 0.39 s
+proved      mir mir_verify: decrypt_block at k = 128, round keys: 11 = Cipher::InvCipher`{128} [w4_unint_z3 InvRound InvSubBytes InvShiftRows AddRoundKey], 0.41 s
+proved      mir mir_verify: decrypt_block at k = 192, round keys: 13 = Cipher::InvCipher`{192} [w4_unint_z3 InvRound InvSubBytes InvShiftRows AddRoundKey], 0.41 s
+proved      mir mir_verify: decrypt_block at k = 256, round keys: 15 = Cipher::InvCipher`{256} [w4_unint_z3 InvRound InvSubBytes InvShiftRows AddRoundKey], 0.42 s
+proved      mir mir_verify: decrypt_block at k = 128, round keys: 15 = Cipher::InvCipher`{128} [w4_unint_z3 InvRound InvSubBytes InvShiftRows AddRoundKey], 0.39 s
+proved      mir mir_verify: decrypt_block at k = 192, round keys: 15 = Cipher::InvCipher`{192} [w4_unint_z3 InvRound InvSubBytes InvShiftRows AddRoundKey], 0.43 s
+proved      mir mir_verify: decrypt_block_prime at k = 128, round keys: 11 = Cipher::InvCipher'`{128} [w4_unint_z3 InvRound' InvSubBytes InvShiftRows InvMixColumns AddRoundKey], 0.40 s
+proved      mir mir_verify: decrypt_block_prime at k = 192, round keys: 13 = Cipher::InvCipher'`{192} [w4_unint_z3 InvRound' InvSubBytes InvShiftRows InvMixColumns AddRoundKey], 0.44 s
+proved      mir mir_verify: decrypt_block_prime at k = 256, round keys: 15 = Cipher::InvCipher'`{256} [w4_unint_z3 InvRound' InvSubBytes InvShiftRows InvMixColumns AddRoundKey], 0.45 s
+proved      mir mir_verify: main::encrypt at k = 128 = Main::AES`{128}.Encrypt [w4_unint_z3 KeyExpansion Cipher], 0.42 s
+proved      mir mir_verify: main::encrypt at k = 192 = Main::AES`{192}.Encrypt [w4_unint_z3 KeyExpansion Cipher], 0.43 s
+proved      mir mir_verify: main::encrypt at k = 256 = Main::AES`{256}.Encrypt [w4_unint_z3 KeyExpansion Cipher], 0.53 s
+proved      mir mir_verify: main::decrypt at k = 128 = Main::AES`{128}.Decrypt [w4_unint_z3 KeyExpansion InvCipher], 0.42 s
 proved      mir mir_verify: main::decrypt at k = 192 = Main::AES`{192}.Decrypt [w4_unint_z3 KeyExpansion InvCipher], 0.44 s
-proved      mir mir_verify: main::decrypt at k = 256 = Main::AES`{256}.Decrypt [w4_unint_z3 KeyExpansion InvCipher], 0.50 s
+proved      mir mir_verify: main::decrypt at k = 256 = Main::AES`{256}.Decrypt [w4_unint_z3 KeyExpansion InvCipher], 0.51 s
 proved      mir mir_verify: notation::exec::ROTR::<2> = Notation::ROTR`{2, 32} [rme], 0.33 s
 proved      mir mir_verify: notation::exec::ROTR::<13> = Notation::ROTR`{13, 32} [rme], 0.35 s
 proved      mir mir_verify: notation::exec::ROTR::<22> = Notation::ROTR`{22, 32} [rme], 0.28 s
 proved      mir mir_verify: notation::exec::ROTR::<6> = Notation::ROTR`{6, 32} [rme], 0.28 s
-proved      mir mir_verify: notation::exec::ROTR::<11> = Notation::ROTR`{11, 32} [rme], 0.32 s
+proved      mir mir_verify: notation::exec::ROTR::<11> = Notation::ROTR`{11, 32} [rme], 0.31 s
 proved      mir mir_verify: notation::exec::ROTR::<25> = Notation::ROTR`{25, 32} [rme], 0.28 s
-proved      mir mir_verify: notation::exec::ROTR::<7> = Notation::ROTR`{7, 32} [rme], 0.28 s
-proved      mir mir_verify: notation::exec::ROTR::<18> = Notation::ROTR`{18, 32} [rme], 0.30 s
-proved      mir mir_verify: notation::exec::ROTR::<17> = Notation::ROTR`{17, 32} [rme], 0.28 s
-proved      mir mir_verify: notation::exec::ROTR::<19> = Notation::ROTR`{19, 32} [rme], 0.32 s
-proved      mir mir_verify: notation::exec::SHR::<3> = Notation::SHR`{3, 32} [rme], 0.29 s
-proved      mir mir_verify: notation::exec::SHR::<10> = Notation::SHR`{10, 32} [rme], 0.33 s
+proved      mir mir_verify: notation::exec::ROTR::<7> = Notation::ROTR`{7, 32} [rme], 0.31 s
+proved      mir mir_verify: notation::exec::ROTR::<18> = Notation::ROTR`{18, 32} [rme], 0.29 s
+proved      mir mir_verify: notation::exec::ROTR::<17> = Notation::ROTR`{17, 32} [rme], 0.33 s
+proved      mir mir_verify: notation::exec::ROTR::<19> = Notation::ROTR`{19, 32} [rme], 0.28 s
+proved      mir mir_verify: notation::exec::SHR::<3> = Notation::SHR`{3, 32} [rme], 0.31 s
+proved      mir mir_verify: notation::exec::SHR::<10> = Notation::SHR`{10, 32} [rme], 0.29 s
 proved      mir mir_verify: functions::exec::SIGMA_256_0 = Functions::SIGMA_256_0 [rme], 0.28 s
-proved      mir mir_verify: functions::exec::SIGMA_256_1 = Functions::SIGMA_256_1 [rme], 0.30 s
-proved      mir mir_verify: functions::exec::sigma_256_0 = Functions::sigma_256_0 [rme], 0.28 s
-proved      mir mir_verify: functions::exec::sigma_256_1 = Functions::sigma_256_1 [rme], 0.31 s
-proved      mir mir_verify: functions::exec::Ch = Functions::Ch at [32] [rme], 0.30 s
-proved      mir mir_verify: functions::exec::Maj = Functions::Maj at [32] [rme], 0.28 s
-proved      mir mir_verify: sha256_stream::compress = SHA256Main::step (Main.cry step at SHA-256) [w4_unint_z3 SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 1.44 s
-proved      mir mir_verify: sha256_stream::hash at 0 bytes = \msg -> split (SHA256Main::hash`{8 * 0} (join msg)) [z3, nothing uninterpreted (no symbolic input)], 3.07 s
-proved      mir mir_verify: sha256_stream::hash at 1 bytes = \msg -> split (SHA256Main::hash`{8 * 1} (join msg)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 0.56 s
-proved      mir mir_verify: sha256_stream::hash at 55 bytes = \msg -> split (SHA256Main::hash`{8 * 55} (join msg)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 4.23 s
-proved      mir mir_verify: sha256_stream::hash at 56 bytes = \msg -> split (SHA256Main::hash`{8 * 56} (join msg)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 4.26 s
-proved      mir mir_verify: sha256_stream::hash at 63 bytes = \msg -> split (SHA256Main::hash`{8 * 63} (join msg)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 4.70 s
-proved      mir mir_verify: sha256_stream::hash at 64 bytes = \msg -> split (SHA256Main::hash`{8 * 64} (join msg)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 4.92 s
-proved      mir mir_verify: sha256_stream::hash at 65 bytes = \msg -> split (SHA256Main::hash`{8 * 65} (join msg)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 4.82 s
-proved      mir mir_verify: sha256_stream::hash at 100 bytes = \msg -> split (SHA256Main::hash`{8 * 100} (join msg)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 7.26 s
-proved      mir mir_verify: sha256_stream::hash at 119 bytes = \msg -> split (SHA256Main::hash`{8 * 119} (join msg)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 8.67 s
-proved      mir mir_verify: sha256_stream::hash at 120 bytes = \msg -> split (SHA256Main::hash`{8 * 120} (join msg)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 9.00 s
-proved      mir mir_verify: sha256_stream::hash at 128 bytes = \msg -> split (SHA256Main::hash`{8 * 128} (join msg)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 9.34 s
-proved      mir mir_verify: sha256_stream::hash at 200 bytes = \msg -> split (SHA256Main::hash`{8 * 200} (join msg)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 15.30 s
-proved      mir mir_verify: sha256_impl::hmac_sha256 at key 0 bytes, text 0 bytes = \key text -> split (HMAC::HMAC`{256, 64, 0, 8 * 0, 32} SHA256Main::hash (x3) key (join text)) [z3, nothing uninterpreted (no symbolic input)], 10.97 s
-proved      mir mir_verify: sha256_impl::hmac_sha256 at key 32 bytes, text 3 bytes = \key text -> split (HMAC::HMAC`{256, 64, 32, 8 * 3, 32} SHA256Main::hash (x3) key (join text)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 7.43 s
-proved      mir mir_verify: sha256_impl::hmac_sha256 at key 32 bytes, text 32 bytes = \key text -> split (HMAC::HMAC`{256, 64, 32, 8 * 32, 32} SHA256Main::hash (x3) key (join text)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 9.74 s
-proved      mir mir_verify: sha256_impl::hmac_sha256 at key 64 bytes, text 3 bytes = \key text -> split (HMAC::HMAC`{256, 64, 64, 8 * 3, 32} SHA256Main::hash (x3) key (join text)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 13.65 s
-proved      mir mir_verify: sha256_impl::hmac_sha256 at key 64 bytes, text 32 bytes = \key text -> split (HMAC::HMAC`{256, 64, 64, 8 * 32, 32} SHA256Main::hash (x3) key (join text)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 15.44 s
-proved      mir mir_verify: sha256_impl::hmac_sha256 at key 65 bytes, text 3 bytes = \key text -> split (HMAC::HMAC`{256, 64, 65, 8 * 3, 32} SHA256Main::hash (x3) key (join text)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 8.33 s
-proved      mir mir_verify: sha256_impl::hmac_sha256 at key 100 bytes, text 32 bytes = \key text -> split (HMAC::HMAC`{256, 64, 100, 8 * 32, 32} SHA256Main::hash (x3) key (join text)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 10.61 s
+proved      mir mir_verify: functions::exec::SIGMA_256_1 = Functions::SIGMA_256_1 [rme], 0.31 s
+proved      mir mir_verify: functions::exec::sigma_256_0 = Functions::sigma_256_0 [rme], 0.29 s
+proved      mir mir_verify: functions::exec::sigma_256_1 = Functions::sigma_256_1 [rme], 0.30 s
+proved      mir mir_verify: functions::exec::Ch = Functions::Ch at [32] [rme], 0.27 s
+proved      mir mir_verify: functions::exec::Maj = Functions::Maj at [32] [rme], 0.31 s
+proved      mir mir_verify: sha256_stream::compress = SHA256Main::step (Main.cry step at SHA-256) [w4_unint_z3 SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 1.42 s
+proved      mir mir_verify: sha256_stream::hash at 0 bytes = \msg -> split (SHA256Main::hash`{8 * 0} (join msg)) [z3, nothing uninterpreted (no symbolic input)], 3.02 s
+proved      mir mir_verify: sha256_stream::hash at 1 bytes = \msg -> split (SHA256Main::hash`{8 * 1} (join msg)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 0.60 s
+proved      mir mir_verify: sha256_stream::hash at 55 bytes = \msg -> split (SHA256Main::hash`{8 * 55} (join msg)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 4.39 s
+proved      mir mir_verify: sha256_stream::hash at 56 bytes = \msg -> split (SHA256Main::hash`{8 * 56} (join msg)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 4.23 s
+proved      mir mir_verify: sha256_stream::hash at 63 bytes = \msg -> split (SHA256Main::hash`{8 * 63} (join msg)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 4.91 s
+proved      mir mir_verify: sha256_stream::hash at 64 bytes = \msg -> split (SHA256Main::hash`{8 * 64} (join msg)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 4.85 s
+proved      mir mir_verify: sha256_stream::hash at 65 bytes = \msg -> split (SHA256Main::hash`{8 * 65} (join msg)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 4.89 s
+proved      mir mir_verify: sha256_stream::hash at 100 bytes = \msg -> split (SHA256Main::hash`{8 * 100} (join msg)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 7.32 s
+proved      mir mir_verify: sha256_stream::hash at 119 bytes = \msg -> split (SHA256Main::hash`{8 * 119} (join msg)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 8.35 s
+proved      mir mir_verify: sha256_stream::hash at 120 bytes = \msg -> split (SHA256Main::hash`{8 * 120} (join msg)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 8.33 s
+proved      mir mir_verify: sha256_stream::hash at 128 bytes = \msg -> split (SHA256Main::hash`{8 * 128} (join msg)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 9.04 s
+proved      mir mir_verify: sha256_stream::hash at 200 bytes = \msg -> split (SHA256Main::hash`{8 * 200} (join msg)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 14.62 s
+proved      mir mir_verify: sha256_impl::hmac_sha256 at key 0 bytes, text 0 bytes = \key text -> split (HMAC::HMAC`{256, 64, 0, 8 * 0, 32} SHA256Main::hash (x3) key (join text)) [z3, nothing uninterpreted (no symbolic input)], 11.17 s
+proved      mir mir_verify: sha256_impl::hmac_sha256 at key 32 bytes, text 3 bytes = \key text -> split (HMAC::HMAC`{256, 64, 32, 8 * 3, 32} SHA256Main::hash (x3) key (join text)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 7.25 s
+proved      mir mir_verify: sha256_impl::hmac_sha256 at key 32 bytes, text 32 bytes = \key text -> split (HMAC::HMAC`{256, 64, 32, 8 * 32, 32} SHA256Main::hash (x3) key (join text)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 9.14 s
+proved      mir mir_verify: sha256_impl::hmac_sha256 at key 64 bytes, text 3 bytes = \key text -> split (HMAC::HMAC`{256, 64, 64, 8 * 3, 32} SHA256Main::hash (x3) key (join text)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 13.84 s
+proved      mir mir_verify: sha256_impl::hmac_sha256 at key 64 bytes, text 32 bytes = \key text -> split (HMAC::HMAC`{256, 64, 64, 8 * 32, 32} SHA256Main::hash (x3) key (join text)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 14.95 s
+proved      mir mir_verify: sha256_impl::hmac_sha256 at key 65 bytes, text 3 bytes = \key text -> split (HMAC::HMAC`{256, 64, 65, 8 * 3, 32} SHA256Main::hash (x3) key (join text)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 8.18 s
+proved      mir mir_verify: sha256_impl::hmac_sha256 at key 100 bytes, text 32 bytes = \key text -> split (HMAC::HMAC`{256, 64, 100, 8 * 32, 32} SHA256Main::hash (x3) key (join text)) [w4_unint_z3 step SIGMA_256_0 SIGMA_256_1 sigma_256_0 sigma_256_1], 10.84 s
 negative    llvm/negative/compress_reversed_feed_forward.saw: foundation_verus::sha2::sha256_stream::compress fails in 2.93 s, counterexample h: [0, 1, 1, 1, 0, 0, 0, 1] m: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 negative    llvm/negative/decrypt_block_reversed_round_keys.saw: foundation_verus::aes::aes_impl::decrypt_block::<128: u32> fails in 0.26 s, counterexample w: [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 65], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 96], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3], [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 8], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]] state: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 negative    llvm/negative/encrypt_block_reversed_round_keys.saw: foundation_verus::aes::aes_impl::encrypt_block::<256: u32> fails in 0.39 s, counterexample w: [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 22], [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 132], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4], [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 3], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2], [0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 128], [0, 0, 0, 128, 128, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 129], [0, 32, 128, 0, 0, 0, 0, 0, 0, 0, 0, 32, 4, 0, 32, 8], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 4, 64], [0, 0, 32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 16], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]] state: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 negative    llvm/negative/expand_key_reversed_key.saw: foundation_verus::aes::aes_impl::expand_key::<128: u32> fails in 0.44 s, counterexample key: [[255, 255, 255, 254], [255, 255, 223, 190], [251, 189, 255, 255], [255, 255, 127, 254]]
-negative    llvm/negative/hash_reversed_message.saw: foundation_verus::sha2::sha256_stream::hash fails in 0.27 s, counterexample msg: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+negative    llvm/negative/hash_reversed_message.saw: foundation_verus::sha2::sha256_stream::hash fails in 0.26 s, counterexample msg: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
 negative    llvm/negative/hmac_reversed_key.saw: foundation_verus::hmac::sha256_impl::hmac_sha256 fails in 0.49 s, counterexample key: [169, 137, 169, 137, 0, 0, 0, 0, 0, 0, 0, 0, 0, 105, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 161, 0, 0, 170, 0, 0, 137, 0, 0, 0, 0, 0, 0, 0, 169, 0, 169, 169, 137, 169] text: [0, 0, 0]
 negative    llvm/negative/sub_bytes_vs_inv_sub_bytes.saw: foundation_verus::aes::aes_impl::sub_bytes fails in 0.04 s, counterexample state: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 negative    llvm/negative/x_times_without_reduction.saw: foundation_verus::aes::aes_impl::x_times fails in 0.03 s, counterexample b: 128
-negative    mir/negative/compress_reversed_feed_forward.saw: foundation_verus/ad695ddf::sha2::sha256_stream::compress fails in 1.72 s, counterexample h: [0, 1, 1, 1, 0, 0, 0, 1] m: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-negative    mir/negative/decrypt_block_reversed_round_keys.saw: foundation_verus/ad695ddf::aes::aes_impl::decrypt_block::_inst47dcda9a99351b4e fails in 0.43 s, counterexample w: [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 65], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 96], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3], [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 8], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]] state: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-negative    mir/negative/encrypt_block_reversed_round_keys.saw: foundation_verus/ad695ddf::aes::aes_impl::encrypt_block::_inst1b66f0c164fadc6d fails in 0.50 s, counterexample w: [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 22], [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 132], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4], [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 3], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2], [0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 128], [0, 0, 0, 128, 128, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 129], [0, 32, 128, 0, 0, 0, 0, 0, 0, 0, 0, 32, 4, 0, 32, 8], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 4, 64], [0, 0, 32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 16], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]] state: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-negative    mir/negative/expand_key_reversed_key.saw: foundation_verus/ad695ddf::aes::aes_impl::expand_key::_inst47dcda9a99351b4e fails in 0.55 s, counterexample key: [[255, 255, 255, 254], [255, 255, 223, 190], [251, 189, 255, 255], [255, 255, 127, 254]]
-negative    mir/negative/hash_reversed_message.saw: foundation_verus/ad695ddf::sha2::sha256_stream::hash fails in 3.99 s, counterexample msg: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0]
-negative    mir/negative/hmac_reversed_key.saw: foundation_verus/ad695ddf::hmac::sha256_impl::hmac_sha256 fails in 7.91 s, counterexample key: [129, 73, 9, 169, 0, 0, 0, 0, 0, 0, 0, 137, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 169, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 64, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 137, 0, 0, 0, 0, 0, 105, 129, 130, 170] text: [0, 0, 0]
-negative    mir/negative/sub_bytes_vs_inv_sub_bytes.saw: foundation_verus/ad695ddf::aes::aes_impl::sub_bytes fails in 0.33 s, counterexample state: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-negative    mir/negative/x_times_without_reduction.saw: foundation_verus/ad695ddf::aes::aes_impl::x_times fails in 0.39 s, counterexample b: 128
-wall-clock  10 s for llvm/aes_impl.saw; 31 s for llvm/sha256_impl.saw; 21 s for mir/aes_impl.saw; 161 s for mir/sha256_impl.saw; 932 s in all
+negative    mir/negative/compress_reversed_feed_forward.saw: foundation_verus/18f1dced::sha2::sha256_stream::compress fails in 1.69 s, counterexample h: [0, 1, 1, 1, 0, 0, 0, 1] m: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+negative    mir/negative/decrypt_block_reversed_round_keys.saw: foundation_verus/18f1dced::aes::aes_impl::decrypt_block::_inst47dcda9a99351b4e fails in 0.43 s, counterexample w: [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 65], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 96], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3], [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 8], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]] state: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+negative    mir/negative/encrypt_block_reversed_round_keys.saw: foundation_verus/18f1dced::aes::aes_impl::encrypt_block::_inst1b66f0c164fadc6d fails in 0.50 s, counterexample w: [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 22], [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 132], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4], [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 3], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2], [0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 128], [0, 0, 0, 128, 128, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 129], [0, 32, 128, 0, 0, 0, 0, 0, 0, 0, 0, 32, 4, 0, 32, 8], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 4, 64], [0, 0, 32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 16], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]] state: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+negative    mir/negative/expand_key_reversed_key.saw: foundation_verus/18f1dced::aes::aes_impl::expand_key::_inst47dcda9a99351b4e fails in 0.56 s, counterexample key: [[255, 255, 255, 254], [255, 255, 223, 190], [251, 189, 255, 255], [255, 255, 127, 254]]
+negative    mir/negative/hash_reversed_message.saw: foundation_verus/18f1dced::sha2::sha256_stream::hash fails in 4.04 s, counterexample msg: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0]
+negative    mir/negative/hmac_reversed_key.saw: foundation_verus/18f1dced::hmac::sha256_impl::hmac_sha256 fails in 7.84 s, counterexample key: [129, 73, 9, 169, 0, 0, 0, 0, 0, 0, 0, 137, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 169, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 64, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 137, 0, 0, 0, 0, 0, 105, 129, 130, 170] text: [0, 0, 0]
+negative    mir/negative/sub_bytes_vs_inv_sub_bytes.saw: foundation_verus/18f1dced::aes::aes_impl::sub_bytes fails in 0.35 s, counterexample state: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+negative    mir/negative/x_times_without_reduction.saw: foundation_verus/18f1dced::aes::aes_impl::x_times fails in 0.38 s, counterexample b: 128
+wall-clock  11 s for llvm/aes_impl.saw; 30 s for llvm/sha256_impl.saw; 20 s for mir/aes_impl.saw; 159 s for mir/sha256_impl.saw; 928 s in all

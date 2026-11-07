@@ -294,12 +294,12 @@ SAW's time for it, each negative control's counterexample and time, and
 the wall-clock. Commit it with the change it checks. The bitcode and the
 MIR (`saw/obj/`) are not tracked.
 
-**Measured** (a `--print` run of 2026-11-01 on an x86_64 Linux machine,
-16 CPUs; `results.txt` holds the recorded run): 168 proofs, 84 per route
+**Measured** (`results.txt`, the run at `d59a3f0` on an x86_64 Linux machine,
+16 CPUs): 168 proofs, 84 per route
 (AES 46, SHA-256 and HMAC 38), and 16 negative controls failing as they
-must, in 925 s in all. The proofs themselves take 10 s (`llvm/aes_impl.saw`),
-30 s (`llvm/sha256_impl.saw`), 20 s (`mir/aes_impl.saw`) and 160 s
-(`mir/sha256_impl.saw`); each proof is under a second on the bitcode but
-`hmac_sha256` at (0, 0) (12 s, the whole digest evaluated on constants),
-and on the MIR `hash` and `hmac_sha256` take 3 to 16 s each. Most of the
+must, in 928 s in all. The proofs themselves take 11 s (`llvm/aes_impl.saw`),
+30 s (`llvm/sha256_impl.saw`), 20 s (`mir/aes_impl.saw`) and 159 s
+(`mir/sha256_impl.saw`); each proof on the bitcode is under 3 s but
+`hmac_sha256` at (0, 0) (11 s, the whole digest evaluated on constants),
+and on the MIR `hash` and `hmac_sha256` take up to 15 s each. Most of the
 rest is the negative controls, which run their route's script first.

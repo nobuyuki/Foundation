@@ -55,7 +55,7 @@ Verus の spec 関数はコンパイルされない。
 
 ## 証明したこと
 
-* **Verus が調べる関数はすべて検証が通る**: 326 verified、0 errors（`cargo verus verify`）。16 CPU のデスクトップで約 14 秒。
+* **Verus が調べる関数はすべて検証が通る**: 326 verified、0 errors（`cargo verus verify`、`d59a3f0` で）。16 CPU のデスクトップで約 14 秒。
   Verus のリソース上限を上げた関数はなく、遅い証明もない（[doc/proving.ja.md](doc/proving.ja.md)）。
 * **何も仮定していない。** `assume`・`admit`・`axiom fn`・`external_body`・`#[verifier::external]`・停止性の免除は 1 つもない。
   Verus が見ないコードは `src/ffi/` の FFI エクスポートだけである。これはテストのために実行可能な関数を Cryptol へ出すもので、1 つずつ理由をつけて [`scripts/trust-surface.txt`](scripts/trust-surface.txt) に載せてある（100 件）。
@@ -65,7 +65,7 @@ Verus の spec 関数はコンパイルされない。
   ストリーミングの SHA-256 と HMAC では、メッセージをチャンクに分けるすべての分け方も含む。
 * **AES について Cryptol 自身が述べる性質**（`algorithms/AES` が述べる 15 個のうち、SPARK の crate と同じ 13 個）を spec 層について証明した。すべての鍵長について一度で済ませている。
 * **SAW**: 各経路（LLVM bitcode と MIR）で 84 件（AES 46 件、SHA-256 と HMAC で 38 件）。
-  各経路で陰性対照 8 件が、失敗すべきとおりに失敗する（`saw/results.txt`）。
+  各経路で陰性対照 8 件が、失敗すべきとおりに失敗する（`saw/results.txt`、`d59a3f0` で）。
   AES は k = 128・192・256。SHA-256 の圧縮関数は全入力。
   ハッシュは 12 通りの長さ、HMAC は 7 通りの（鍵、テキスト）の組で、パディングの境目を選んだ。
   詳細と、SAW が扱わない部分: [doc/saw.ja.md](doc/saw.ja.md)。

@@ -97,15 +97,15 @@ does not have, so both are set against NSA's `decrypt`.
 
 ## x86_64, Linux (a desktop)
 
-Intel Core i9-9900K (8 cores, 16 logical CPUs), Linux 7.1, rustc 1.98.1,
-2026-11-02 09:24 UTC.
+Intel Core i9-9900K (8 cores, 16 logical CPUs), Linux 7.2, rustc 1.98.1,
+at `d59a3f0`, 2026-11-07 09:19 UTC.
 Two full runs, back to back; the numbers are the first's. The second's
-medians are within 3% of them in 71 of 75 cells and within 5.5% in all,
+medians are within 3% of them in 73 of 75 cells and within 4.0% in all,
 and the sizes are identical. **A shared desktop, not an idle machine**:
-the 1-minute load was 0.98 before the first run and 1.44 after the second
+the 1-minute load was 1.12 before the first run and 1.03 after the second
 (the benchmark is one of it), with no proof or other benchmark running.
-No thread was pinned to a core. The quartiles are 0.9% apart in the
-median cell, within 2% in 56 of 75 cells and within 4.4% in all.
+No thread was pinned to a core. The quartiles are 3.3% apart in the
+median cell, within 2% in 7 of 75 cells and within 6.3% in all.
 
 Size (bytes):
 
@@ -148,44 +148,46 @@ Time (ns per call, median; first and third quartile in the report):
 
 | op | `verus-O3` | `rust-O3` | `verus-O2` | `rust-O2` | `verus-release` | `rust-release` |
 |---|---:|---:|---:|---:|---:|---:|
-| AES-128 `expand_key` | 73.9 | 336.0 | 80.3 | 335.7 | 73.9 | 312.7 |
-| AES-128 encrypt | 246.6 | 444.7 | 239.4 | 479.6 | 244.9 | 438.1 |
-| AES-128 decrypt (`decrypt_block`) | 369.1 | 712.9 | 382.5 | 762.9 | 372.8 | 757.4 |
-| AES-128 `decrypt_block_prime` | 380.1 | 712.9 | 395.0 | 762.9 | 375.5 | 757.4 |
-| AES-192 `expand_key` | 95.2 | 389.5 | 103.9 | 382.6 | 96.1 | 347.0 |
-| AES-192 encrypt | 299.0 | 536.3 | 289.0 | 571.3 | 296.8 | 526.5 |
-| AES-192 decrypt (`decrypt_block`) | 449.2 | 865.6 | 463.9 | 921.9 | 453.5 | 916.4 |
-| AES-192 `decrypt_block_prime` | 453.2 | 865.6 | 479.7 | 921.9 | 457.3 | 916.4 |
-| AES-256 `expand_key` | 113.2 | 446.7 | 113.5 | 445.5 | 108.5 | 411.9 |
-| AES-256 encrypt | 350.7 | 624.0 | 338.4 | 708.5 | 349.3 | 617.8 |
-| AES-256 decrypt (`decrypt_block`) | 529.2 | 1014.3 | 546.0 | 1077.8 | 535.6 | 1072.4 |
-| AES-256 `decrypt_block_prime` | 533.5 | 1014.3 | 564.6 | 1077.8 | 538.8 | 1072.4 |
+| AES-128 `expand_key` | 75.3 | 343.9 | 97.3 | 352.3 | 77.0 | 354.1 |
+| AES-128 encrypt | 246.9 | 447.2 | 240.9 | 449.8 | 245.1 | 471.1 |
+| AES-128 decrypt (`decrypt_block`) | 369.9 | 719.6 | 387.0 | 727.5 | 381.3 | 747.7 |
+| AES-128 `decrypt_block_prime` | 376.1 | 719.6 | 401.4 | 727.5 | 377.6 | 747.7 |
+| AES-192 `expand_key` | 95.5 | 394.1 | 94.9 | 413.7 | 95.4 | 409.6 |
+| AES-192 encrypt | 299.7 | 535.8 | 289.7 | 541.3 | 302.8 | 560.0 |
+| AES-192 decrypt (`decrypt_block`) | 450.4 | 874.3 | 469.7 | 875.4 | 459.3 | 901.4 |
+| AES-192 `decrypt_block_prime` | 453.9 | 874.3 | 482.6 | 875.4 | 461.9 | 901.4 |
+| AES-256 `expand_key` | 108.5 | 449.9 | 118.9 | 470.9 | 108.7 | 475.2 |
+| AES-256 encrypt | 353.8 | 625.5 | 345.2 | 624.9 | 348.8 | 654.8 |
+| AES-256 decrypt (`decrypt_block`) | 532.0 | 1026.6 | 555.9 | 1025.6 | 544.8 | 1065.6 |
+| AES-256 `decrypt_block_prime` | 536.9 | 1026.6 | 574.6 | 1025.6 | 546.7 | 1065.6 |
 
 (The Rust columns of the `decrypt_block_prime` rows repeat NSA's one
 decryption. `verus-O3-checks`, the same code as `verus-O3`, is within 4%
-of it in every cell, 0.98–1.04×. That is the size of an effect that code
+of it in every cell, 0.99–1.04×. That is the size of an effect that code
 layout and the machine alone make here, and a bound on what the other
 columns can tell apart.)
 
 What it shows, at `opt-level` 3:
 
 * **The crate's AES is about twice as fast as NSA's**: key expansion
-  0.22–0.25×, encrypt 0.55–0.56×, decrypt 0.52× (`decrypt_block`) and
-  0.52–0.53× (`decrypt_block_prime`, the same structure as NSA's
+  0.22–0.24×, encrypt 0.55–0.57×, decrypt 0.51–0.52× (`decrypt_block`) and
+  0.52× (`decrypt_block_prime`, the same structure as NSA's
   `inv_cipher`). The SPARK crate on its x86_64 instance had encrypt
   0.51–0.53×, key expansion 0.39–0.42× and decrypt 1.01–1.03× against the
   same Rust (rustc 1.95.0, another CPU). Both compilers being rustc here,
   the gap is in the source. Where in the source has not been looked into.
 * **The ratios hold across the profiles**: at `opt-level` 2 the crate is
-  0.24–0.27× on key expansion, 0.48–0.51× on encrypt and 0.50–0.52× on
-  decrypt, and without LTO 0.24–0.28×, 0.56–0.57× and 0.49–0.50×.
+  0.23–0.28× on key expansion, 0.54–0.55× on encrypt and 0.53–0.56× on
+  decrypt, and without LTO 0.22–0.23×, 0.52–0.54× and 0.51×.
 * **`opt-level` 2 against 3, and LTO, matter little to either side**,
-  within or near the 4% above: the crate at 2 is 3–4% faster on encrypt,
-  3–6% slower on decrypt and up to 9% slower on key expansion, and the
-  crate without LTO is within 4% of `perf-o3`. NSA's at 2 is 6–14% slower
-  on the ciphers. NSA's `key_expansion` is 7–11% faster in the plain
-  release build than at `perf-o3`, as the SPARK document found (25–27% on
-  its x86_64 instance), and its decryption 6% slower.
+  within or near the 4% above, but for the crate's AES-128 key expansion:
+  the crate at 2 is 2–3% faster on encrypt, 4–7% slower on decrypt, and
+  on key expansion 29% slower at AES-128, 10% at AES-256 and 1% faster at
+  AES-192; the crate without LTO is within 3% of `perf-o3`. NSA's at 2 is
+  within 1% on the ciphers and 2–5% slower on key expansion. NSA's plain
+  release build is 3–6% slower than `perf-o3` throughout, where the SPARK
+  document found its `key_expansion` 25–27% faster there (on its x86_64
+  instance).
 * **The checks cost nothing here**: the proof makes overflow impossible,
   and in this code rustc reaches the same conclusion on its own (above).
   The bounds checks are another matter. They stay in every build, proof

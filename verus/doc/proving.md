@@ -24,7 +24,7 @@ verification results:: 326 verified, 0 errors
 Verus `0.2026.10.16.bf5bb51` is pinned in `Cargo.toml`
 (`[workspace.metadata.verus]`), with Rust `1.98.1` (`rust-toolchain.toml`)
 and `vstd =0.0.0-2026-10-11-0230` (`Cargo.toml`), and the three move
-together. A full run takes about 14 s on a 16-CPU x86_64 desktop; the slowest module, `aes::sbox_entries`, takes
+together. A full run at `d59a3f0` takes about 14 s on a 16-CPU x86_64 desktop; the slowest module, `aes::sbox_entries`, takes
 about 12 s on its own. One module is verified with
 
 ```console

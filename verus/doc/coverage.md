@@ -108,7 +108,7 @@ MAX_TEXT` (Cryptol's `61 >= width k`). The SPARK crate's exports have no
 such checks, so its file has no entries. The implementation layer
 (`aes/`, `sha2/`, `hmac/`) has no entry: the properties run all of it.
 
-Measured on 2026-11-02:
+Measured at `d59a3f0`, on 2026-11-07:
 
 | | region | line | branch | MC/DC |
 |---|---|---|---|---|

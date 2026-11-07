@@ -17,7 +17,7 @@ verification results:: 326 verified, 0 errors
 
 Verus `0.2026.10.16.bf5bb51` を `Cargo.toml`（`[workspace.metadata.verus]`）で固定している。
 Rust は `1.98.1`（`rust-toolchain.toml`）、`vstd` は `=0.0.0-2026-10-11-0230`（`Cargo.toml`）で、3 つは一緒に動かす。
-全体の実行は 16 CPU の x86_64 のデスクトップで約 14 秒かかる。いちばん遅いモジュール `aes::sbox_entries` は単独で約 12 秒である。
+`d59a3f0` での全体の実行は 16 CPU の x86_64 のデスクトップで約 14 秒かかる。いちばん遅いモジュール `aes::sbox_entries` は単独で約 12 秒である。
 モジュール 1 つだけを検証するには
 
 ```console

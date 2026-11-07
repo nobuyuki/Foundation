@@ -198,8 +198,8 @@ bitcode と MIR の sha256、rustc が bitcode のために読んだすべての
 各結果とその tactic と SAW がかけた時間、各陰性対照の反例と時間、経過時間である。
 確かめた変更と一緒にコミットする。bitcode と MIR（`saw/obj/`）は追跡しない。
 
-**測定**（2026-11-01 の x86_64 の Linux マシン、16 CPU での `--print` の実行。記録した実行は `results.txt` にある）:
-168 件の証明（経路ごとに 84 件: AES 46 件、SHA-256 と HMAC で 38 件）と、失敗すべきとおりに失敗する 16 件の陰性対照で、全部で 925 秒。
-証明そのものにかかるのは、10 秒（`llvm/aes_impl.saw`）、30 秒（`llvm/sha256_impl.saw`）、20 秒（`mir/aes_impl.saw`）、160 秒（`mir/sha256_impl.saw`）である。
-bitcode の上では、(0, 0) での `hmac_sha256`（12 秒。digest 全体を定数の上で評価する）を除き、どの証明も 1 秒未満である。MIR の上では `hash` と `hmac_sha256` がそれぞれ 3 秒から 16 秒かかる。
+**測定**（`results.txt`。`d59a3f0` での実行、x86_64 の Linux マシン、16 CPU）:
+168 件の証明（経路ごとに 84 件: AES 46 件、SHA-256 と HMAC で 38 件）と、失敗すべきとおりに失敗する 16 件の陰性対照で、全部で 928 秒。
+証明そのものにかかるのは、11 秒（`llvm/aes_impl.saw`）、30 秒（`llvm/sha256_impl.saw`）、20 秒（`mir/aes_impl.saw`）、159 秒（`mir/sha256_impl.saw`）である。
+bitcode の上では、(0, 0) での `hmac_sha256`（11 秒。digest 全体を定数の上で評価する）を除き、どの証明も 3 秒未満である。MIR の上では `hash` と `hmac_sha256` がそれぞれ最大 15 秒かかる。
 残りの大半は陰性対照で、これは先にその経路のスクリプトを回す。
